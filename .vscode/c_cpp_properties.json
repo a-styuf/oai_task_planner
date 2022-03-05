@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "defines": [
+                "_EXT_MEM_RLS_",
+                "__clang__"
+            ],
+            "windowsSdkVersion": "10.0.22000.1",
+            "compilerPath": "C:\\Keil_v5\\ARM\\ARMCLANG\\bin\\armclang.exe",
+            "cppStandard": "c++17",
+            "cStandard": "c11",
+            "intelliSenseMode": "macos-gcc-arm",
+            "includePath": [
+                "${workspaceFolder}/Sources",
+                "${workspaceFolder}/Sources/1986ve8_lib",
+                "C:/Keil_v5/ARM/ARMCLANG/include"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/Sources/types.h"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": false
+            }
+        }
+    ],
+    "version": 4
+}
