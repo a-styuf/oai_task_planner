@@ -465,6 +465,11 @@
               <FilePath>.\Sources\mko.c</FilePath>
             </File>
             <File>
+              <FileName>dep.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\dep.c</FilePath>
+            </File>
+            <File>
               <FileName>frame_mem.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Sources\frame_mem.c</FilePath>
@@ -493,6 +498,21 @@
               <FileName>spi_fram.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\spi_fram.h</FilePath>
+            </File>
+            <File>
+              <FileName>dir.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\dir.c</FilePath>
+            </File>
+            <File>
+              <FileName>bdd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\bdd.c</FilePath>
+            </File>
+            <File>
+              <FileName>ddii.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ddii.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -975,6 +995,11 @@
               <FilePath>.\Sources\mko.c</FilePath>
             </File>
             <File>
+              <FileName>dep.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\dep.c</FilePath>
+            </File>
+            <File>
               <FileName>frame_mem.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Sources\frame_mem.c</FilePath>
@@ -1003,6 +1028,21 @@
               <FileName>spi_fram.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\spi_fram.h</FilePath>
+            </File>
+            <File>
+              <FileName>dir.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\dir.c</FilePath>
+            </File>
+            <File>
+              <FileName>bdd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\bdd.c</FilePath>
+            </File>
+            <File>
+              <FileName>ddii.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ddii.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1485,6 +1525,11 @@
               <FilePath>.\Sources\mko.c</FilePath>
             </File>
             <File>
+              <FileName>dep.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\dep.c</FilePath>
+            </File>
+            <File>
               <FileName>frame_mem.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Sources\frame_mem.c</FilePath>
@@ -1513,6 +1558,21 @@
               <FileName>spi_fram.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\spi_fram.h</FilePath>
+            </File>
+            <File>
+              <FileName>dir.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\dir.c</FilePath>
+            </File>
+            <File>
+              <FileName>bdd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\bdd.c</FilePath>
+            </File>
+            <File>
+              <FileName>ddii.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ddii.c</FilePath>
             </File>
           </Files>
         </Group>
