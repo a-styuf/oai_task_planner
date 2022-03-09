@@ -1,7 +1,7 @@
 # my ignores
 /Objs/*
-doxygen/html
-doxygen/latex
+doxygen/html/
+doxygen/latex/
 
 # Prerequisites
 *.d
