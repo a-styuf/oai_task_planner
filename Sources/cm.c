@@ -26,10 +26,14 @@ void cm_init(typeCMModel* cm_ptr, uint8_t self_num, uint8_t id, uint16_t device_
 	mko_init(&cm_ptr->mko_rt, MIL_STD_15531, MKO_RT, MKO_ADDRESS_DEFAULT);
 	mko_init(&cm_ptr->mko_bc, MIL_STD_15532, MKO_BC, NULL);
 	fr_mem_init(&cm_ptr->mem, FR_MEM_TYPE_WR_TO_RD);
+	// Half-set gpio id
+	gpio_init(&cm_ptr->half_set_num_io, HALF_SET_IO_PORT, HALF_SET_LINE);
 	//
 	cm_reset_parameters(cm_ptr);
 	cm_ptr->id = id;
 	cm_ptr->self_num = self_num;
+	cm_ptr->half_set_num = gpio_get(&cm_ptr->half_set_num_io);
+	stm_const_set(&cm_ptr->stm[NKBE], cm_ptr->half_set_num);
 	cm_ptr->device_number = device_number;
 	cm_ptr->frame_type = frame_type;
 	//
@@ -43,13 +47,18 @@ void cm_reset_parameters(typeCMModel* cm_ptr)
 {
 	uint8_t i=0;
 	uint16_t interv_default_values[CM_INTERV_NUMBER] = DEFAULT_CM_INTERV_VALUES_S;
+	uint16_t interv_start_time[CM_INTERV_NUMBER] = DEFAULT_CM_DEFAULT_START_TIME_S;
+	PortControl* stm_gpio_port[STM_NUM] = STM_IO_PORT;
+	uint8_t stm_gpio_line[STM_NUM] = STM_IO_LINE;
+	uint8_t stm_default_val[STM_NUM] = STM_DEFAULT_VAL;
 	//
-	cm_ptr->last_call_time_us = 0;
 	cm_ptr->last_call_time_us = 0;
 	//
 	for (i=0; i<CM_INTERV_NUMBER; i++){
 		cm_ptr->ctrl.intervals[i] = interv_default_values[i];
-		cm_ptr->ctrl.last_call_interval_times[i] = 0x00;
+		cm_ptr->ctrl.last_call_interval_times[i] = 0;
+		cm_ptr->ctrl.first_call_status[i] = 0;
+		cm_ptr->ctrl.first_call_time[i] = interv_start_time[i];
 	}
 	cm_ptr->ctrl.meas_event = 0x00;
 	cm_ptr->ctrl.speedy_event = 0x00;
@@ -59,6 +68,15 @@ void cm_reset_parameters(typeCMModel* cm_ptr)
 	cm_ptr->ctrl.speedy_mode_timeout = 0x00;
 	cm_ptr->ctrl.frame_end_to_end_number = 0x00;
 	cm_ptr->ctrl.rst_cnter = 0x00;
+	fr_mem_set_rd_ptr(&cm_ptr->mem, 0);
+	fr_mem_set_wr_ptr(&cm_ptr->mem, 0);
+	//
+	cm_ptr->ctrl.sync_num = 0;
+	cm_ptr->ctrl.sync_time_s = 0;
+	cm_ptr->ctrl.diff_time = 0;
+	cm_ptr->ctrl.diff_time_fractional = 0;
+	//
+	// cm_ptr->ctrl.operation_time = cm_ptr->ctrl.operation_time;
 	// инициализация структуры управления кадрами
 	cm_ptr->frames_fifo_num = 0x00;
 	cm_ptr->frames_fifo_num_max = 0x00;
@@ -68,9 +86,88 @@ void cm_reset_parameters(typeCMModel* cm_ptr)
 	//
 	cm_ptr->id = 0;
 	cm_ptr->self_num = 0;
+	cm_ptr->half_set_num = 0; 
 	cm_ptr->device_number = 0;
 	cm_ptr->frame_type = 0;
 	memset((uint8_t*)&cm_ptr->frame, 0x00, sizeof(typeSysFrameUnion));
+	// инициализация СТМ
+	for (i=0; i<STM_NUM; i++){
+		stm_init(&cm_ptr->stm[i], stm_default_val[i], stm_gpio_port[i], stm_gpio_line[i]);
+	}
+}
+
+/**
+  * @brief  функция загрузки параметров из памяти
+  * @param  cm_ptr указатель на структуру управления
+  */
+uint8_t cm_load_cfg(typeCMModel* cm_ptr)
+{
+	typeCfgFrameUnion cfg;
+	if (fr_mem_param_load(&cm_ptr->mem, (uint8_t*)&cfg) < 0){
+		return 0;
+	}
+	else{
+		memcpy((uint8_t*)&cm_ptr->loaded_cfg, (uint8_t*)&cfg, sizeof(typeCfgFrameUnion));
+		cm_set_cfg(cm_ptr);
+		return 1;
+	}
+}
+
+/**
+  * @brief  функция сохранениея параметров ЦМ в память
+  * @param  cm_ptr указатель на структуру управления
+  */
+void cm_save_cfg(typeCMModel* cm_ptr)
+{
+	cm_get_cfg(cm_ptr);
+	fr_mem_param_save(&cm_ptr->mem, (uint8_t*)&cm_ptr->current_cfg);
+}
+
+/**
+  * @brief  функция установки парамтров в ЦМ
+  * @param  cm_ptr указатель на структуру управления
+  */
+void cm_set_cfg(typeCMModel* cm_ptr)
+{
+	// питание
+	// pwr_set_state(&cm_ptr->pwr, cm_ptr->loaded_cfg.cfg.body.power_state);		
+	// cm_ptr->loaded_cfg.cfg.body.power_state;		
+	//
+	cm_ptr->ctrl.rst_cnter = cm_ptr->loaded_cfg.cfg.body.rst_cnter + 1;  		
+	//cm_ptr->loaded_cfg.cfg.body.gup;				
+	//
+	cm_ptr->ctrl.operation_time = cm_ptr->loaded_cfg.cfg.body.operation_time;
+	//
+	fr_mem_set_rd_ptr(&cm_ptr->mem, cm_ptr->loaded_cfg.cfg.body.read_ptr);
+	fr_mem_set_wr_ptr(&cm_ptr->mem, cm_ptr->loaded_cfg.cfg.body.write_ptr);
+	
+}
+
+/**
+  * @brief  функция получения параметров ЦМ из рабочих регистров в cfg
+  * @param  cm_ptr указатель на структуру управления
+  */
+void cm_get_cfg(typeCMModel* cm_ptr)
+{
+	cm_ptr->current_cfg.row.label = 0x0FF1;
+	cm_ptr->current_cfg.row.definer = frame_definer(0, cm_ptr->device_number, NULL, CM_CFG_FRAME_TYPE);
+	cm_ptr->current_cfg.row.num = 0xFEFE; //не исползуется для данного типа кадров
+	cm_ptr->current_cfg.row.time = Get_Time_s();
+	//
+	cm_ptr->current_cfg.cfg.body.power_status = cm_ptr->pwr.status;
+	cm_ptr->current_cfg.cfg.body.power_state = cm_ptr->pwr.state;
+	//
+	cm_ptr->current_cfg.cfg.body.rst_cnter = cm_ptr->ctrl.rst_cnter;
+	cm_ptr->current_cfg.cfg.body.gup = 0xFE;
+	//
+	cm_ptr->current_cfg.cfg.body.operation_time = cm_ptr->ctrl.operation_time;
+	//
+	cm_ptr->current_cfg.cfg.body.write_ptr = cm_ptr->mem.write_ptr;
+	cm_ptr->current_cfg.cfg.body.read_ptr = cm_ptr->mem.read_ptr;
+	//
+	memset((uint8_t*)&cm_ptr->current_cfg.cfg.body.reserve, 0xFE, sizeof(cm_ptr->loaded_cfg.cfg.body.reserve)); 
+	//
+	cm_ptr->current_cfg.row.crc16 = frame_crc16((uint8_t*)&cm_ptr->current_cfg.row, sizeof(typeFrameStruct) - 2);
 }
 
 /**
@@ -101,6 +198,9 @@ int8_t cm_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceSt
 			cm_ptr->ctrl.speedy_mode_state = 0;
 			cm_ptr->ctrl.speedy_mode_timeout = 0; 
 		}
+		//stm
+		stm_process(&cm_ptr->stm[NKBE], cm_ptr->call_interval_us/1000);
+		stm_process(&cm_ptr->stm[AMKO], cm_ptr->call_interval_us/1000);
 		// user code end
 		retval = 1;
 	}
@@ -121,6 +221,14 @@ int8_t cm_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceSt
 	if (cm_interval_processor(cm_ptr, CM_INTERV_MEAS, time_us)) {
 		// user code begin
 		cm_ptr->ctrl.meas_event = 1; //! обязательно перепроверить сброс
+		// user code end
+		retval = 1;
+	}
+	//
+		if (cm_interval_processor(cm_ptr, CM_1S_INTERVAL, time_us)) {
+		// user code begin
+		cm_ptr->ctrl.operation_time += 1;
+		cm_save_cfg(cm_ptr);
 		// user code end
 		retval = 1;
 	}
@@ -171,7 +279,7 @@ int8_t cm_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceSt
 		cm_frame_receive(cm_ptr, (uint8_t*)&cm_ptr->frame);
 	}
 	// perepherial events
-	for(device = MPP1; device <= MPP2; device++){
+	for(device = PER_TMPLT; device <= PER_TMPLT; device++){
 		if(interface->event[device] & CM_EVENT_MEAS_INTERVAL_DATA_READY){
 			interface->event[device] &= ~CM_EVENT_MEAS_INTERVAL_DATA_READY;
 			cm_frame_receive(cm_ptr, (uint8_t*)&interface->shared_mem[64*device]);
@@ -281,10 +389,19 @@ int8_t cm_read_fifo(typeCMModel* cm_ptr, typeFrameStruct* frame)
  */
 int8_t cm_interval_processor(typeCMModel* cm_ptr, uint8_t interval_id, uint64_t time_us)
 {
-	uint64_t interval_us = cm_ptr->ctrl.intervals[interval_id] * 1000000;
+	uint64_t interval_us;
 	uint64_t last_call_interval = (time_us - cm_ptr->ctrl.last_call_interval_times[interval_id]);
+	//
+	if (cm_ptr->ctrl.first_call_status[interval_id] == 0){
+		interval_us = cm_ptr->ctrl.first_call_time[interval_id] * 1000000;
+	}
+	else{
+		interval_us = cm_ptr->ctrl.intervals[interval_id] * 1000000;
+	}
+
 	if (last_call_interval > interval_us) {
 		cm_ptr->ctrl.last_call_interval_times[interval_id] = time_us;
+		cm_ptr->ctrl.first_call_status[interval_id] = 1;
 		return 1;
 	}
 	return 0;
@@ -313,6 +430,9 @@ void cm_set_interval_value(typeCMModel* cm_ptr, uint16_t interval_number, uint16
 		case(CM_INTERVAL_DBG):
 			cm_ptr->ctrl.intervals[CM_INTERVAL_DBG] = get_val_from_bound(interval_value_s, 10, 7200);
 			break;
+		case(CM_1S_INTERVAL):
+			//
+			break;
 	}
 }
 
@@ -326,7 +446,7 @@ void cm_set_interval_value(typeCMModel* cm_ptr, uint16_t interval_number, uint16
 void cm_set_speedy_mode(typeCMModel* cm_ptr, uint16_t speedy_mask, uint16_t time_s)
 {
 	cm_ptr->ctrl.speedy_mode_state = speedy_mask & CM_DEVICE_SPEEDY_MODE_MASK;
-	cm_ptr->ctrl.speedy_mode_timeout = time_s*1000000; //приведение к мкс
+cm_ptr->ctrl.speedy_mode_timeout = get_val_from_bound(time_s, 1, 3600)*1000000; //приведение к мкс
 }
 
 // Раобота с системным кадром
@@ -336,13 +456,34 @@ void cm_set_speedy_mode(typeCMModel* cm_ptr, uint16_t speedy_mask, uint16_t time
   */
 void cm_frame_forming(typeCMModel* cm_ptr)
 {
+	uint8_t i;
 	//
 	cm_ptr->frame.row.label = 0x0FF1;
 	cm_ptr->frame.row.definer = frame_definer(0, cm_ptr->device_number, NULL, cm_ptr->frame_type);
 	cm_ptr->frame.row.num = (cm_ptr->global_frame_num++);
 	cm_ptr->frame.row.time = Get_Time_s();
 	// заполнение полей ЦМ
-	memset(cm_ptr->frame.sys.body.reserve, 0xFEFE, sizeof(cm_ptr->frame.sys.body.reserve));
+	memset((uint8_t*)cm_ptr->frame.row.data, 0xFEFE, sizeof(cm_ptr->frame.row.data));
+	//
+	for (i=0; i<PWR_CH_NUMBER; i++) {
+		cm_ptr->frame.sys.body.currents[i] = cm_ptr->pwr.ch[i].current;
+	}
+	cm_ptr->frame.sys.body.power_status = cm_ptr->pwr.status;
+	cm_ptr->frame.sys.body.power_state = cm_ptr->pwr.state;
+	cm_ptr->frame.sys.body.nans_status = cm_ptr->ib.nans_status + (((cm_ptr->mko_bc.error) ? 1 : 0) << 13);
+	cm_ptr->frame.sys.body.nans_counter = cm_ptr->ib.nans_counter + cm_ptr->mko_bc.error_cnt;
+	cm_ptr->frame.sys.body.rst_cnter = cm_ptr->ctrl.rst_cnter & 0xFF;
+	cm_ptr->frame.sys.body.operation_time = cm_ptr->ctrl.operation_time;
+	cm_ptr->frame.sys.body.sync_time_s = cm_ptr->ctrl.sync_time_s;
+	cm_ptr->frame.sys.body.sync_num = cm_ptr->ctrl.sync_num & 0xFF;
+	cm_ptr->frame.sys.body.diff_time = cm_ptr->ctrl.diff_time;
+	cm_ptr->frame.sys.body.mcu_temp = cm_ptr->adc.mcu_temp;
+	cm_ptr->frame.sys.body.stm_val = 0x00;
+	for (i=0; i<STM_NUM; i++){
+		cm_ptr->frame.sys.body.stm_val |= (stm_get(&cm_ptr->stm[i]) << i) & 0x01;
+	}
+	cm_ptr->frame.sys.body.read_ptr = cm_ptr->mem.read_ptr;
+	cm_ptr->frame.sys.body.write_ptr = cm_ptr->mem.write_ptr;
 	//
 	cm_ptr->frame.row.crc16 = frame_crc16((uint8_t*)&cm_ptr->frame.row, sizeof(typeFrameStruct) - 2);
 }

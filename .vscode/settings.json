@@ -28,7 +28,8 @@
     "dep.h": "c",
     "bdd.h": "c",
     "string.h": "c",
-    "gpio.h": "c"
+    "gpio.h": "c",
+    "perepherial_teamplate.h": "c"
   },
   "C_Cpp.errorSquiggles": "Enabled"
 }

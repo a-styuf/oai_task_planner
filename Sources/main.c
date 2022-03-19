@@ -1,4 +1,3 @@
-
 #include "1986ve8_lib/cm4ikmcu.h"
 #include <string.h>
 #include <stdio.h>
@@ -10,16 +9,14 @@
 #include "mko.h"
 #include "debug.h"
 #include "internal_bus.h"
-#include "mpp.h"
-#include "task_planner.h"
 #include "frames.h"
-
-
+#include "peripheral_teamplate_ib.h"
+#include "task_planner.h"
 
 // создание объектов отдельных программных моделей
-typeTPStruct tp;  	//! обязательный объект планировщика задач
+typeTPStruct tp;	//! обязательный объект планировщика задач
 typeCMModel cm;		//! объект управления переферией ЦМ
-typeMPPStruct mpp[MPP_DEV_NUM];	//! програмная модель переферийных модулей МПП
+typePERTMPLTStruct per_tmplt; //! програмная модель примера переферийного модуля
 
 // прототипы функций для использования внутри main.c (описание в фунциях)
 void __main_process_registration_box(void);
@@ -36,13 +33,15 @@ int main() {
 	// базовая инициализация 
 	System_Init();  // инициализация переферии микроконтроллера: платформозависимая
 	Timers_Init();	// инициализация таймеров и управления временем
-	tp_init(&tp);	// иниицализация планировщика задач
 	//
-	cm_init(&cm, CM, CM_SELF_MB_ID, FRAME_DEV_ID, 15);  // инициализация объекта програмной модели ЦМ (включает в себя все переферийные модели ЦМ: ВШ, МКО, GPIO, ADC и т.п.)
+	cm_init(&cm, CM, CM_SELF_MB_ID, FRAME_DEV_ID, CM+1);  // инициализация объекта програмной модели ЦМ (включает в себя все переферийные модели ЦМ: ВШ, МКО, GPIO, ADC и т.п.)
+	cm_load_cfg(&cm);	// загрузка конфигурации из энергонезависимой памяти
 	//
 	pwr_all_on_off(&cm.pwr, 1);  // включение переферии согласно настройкам каналов управления питанием
 	//
 	__main_init_perepherial_modules();  //инициализация объектов переферии, подключаемых к ЦМ
+	//
+	tp_init(&tp);	// иниицализация планировщика задач
 	// Системные процессы
 	__main_process_registration_box();  //регистрация процессов обработки ЦМ и переферии
 	//
@@ -56,24 +55,9 @@ int main() {
 */
 void __main_init_perepherial_modules(void)
 {
-	// настройки каналов МПП
-	uint32_t mpp_offsets_array[MPP_DEV_NUM] = MPP_DEFAULT_OFFSET;
-	uint32_t mpp_ib_id[MPP_DEV_NUM] = MPP_ID;
-	uint32_t mpp_ch_num[MPP_DEV_NUM] = MPP_CHANNENUM_ID;
-	uint8_t uint8_var = 0;
-	/**
-	 * @brief  цикл используется для последовательной нумерации схожих устройств. Использование необязяательно
-	 */
-	for (uint8_var = 0; uint8_var<MPP_DEV_NUM; uint8_var++){
-		mpp_init(	&mpp[uint8_var], 
-					MPP1 + uint8_var, 
-					mpp_ib_id[uint8_var], 
-					FRAME_DEV_ID, uint8_var+1, 
-					mpp_ch_num[uint8_var], 
-					mpp_offsets_array[uint8_var], 
-					&cm.ib, 
-					&cm.global_frame_num);
-	}
+	// инициализация единственного переферийного устройства
+	per_tmplt_init(&per_tmplt, PER_TMPLT, 2, FRAME_DEV_ID, PER_TMPLT+1, &cm.ib, &cm.global_frame_num);
+
 }
 
 // Командный интерфейс
@@ -82,24 +66,20 @@ void __main_init_perepherial_modules(void)
 */
 void __main_process_registration_box(void)
 {
-	uint8_t uint8_var;
 	// процессы для поддрежания работы ЦМ и его систем: питания, АЦП, внутренней шины
 	tp_process_registration(&tp, &cm_process_tp, &cm, CM*64, TP_SHARED_MEM_VOL_B);
 	tp_process_registration(&tp, &adc_process_tp, &cm.adc, 0, 0);
 	tp_process_registration(&tp, &pwr_process_tp, &cm.pwr, 0, 0);
 	tp_process_registration(&tp, &ib_process_tp, &cm.ib, 0, 0);
 	// Процессы переферийных устройств
-	for (uint8_var = 0; uint8_var < MPP_DEV_NUM; uint8_var++){
-		tp_process_registration(&tp, &mpp_process_tp, &mpp[uint8_var], 64*(MPP1+uint8_var), 64);
-	}
+	tp_process_registration(&tp, &per_tmplt_process_tp, &per_tmplt, 64*PER_TMPLT, 64);
 }
 
 /**
-  * @brief  обертка для базовой инициализации БЭ
+  * @brief  обертка для базовой инициализации БЭ через команду МКО (или ВШ)
 */
 void __main_base_init(void)
 {
-	uint8_t uint8_var = 0;
 	// отключение переферии
 	pwr_all_on_off(&cm.pwr, 0);  //todo: возможно необходимо поместить данную функциб после инициализации ЦМ
 	// отключение планировщика задач
@@ -107,15 +87,11 @@ void __main_base_init(void)
 	// архивация памяти
 	fr_mem_format(&cm.mem);
 	// инициализация структур
-	cm_init(&cm, CM, 1, FRAME_DEV_ID, 15);
+	cm_init(&cm, CM, 1, FRAME_DEV_ID, CM+1);
 	// включение переферии
 	pwr_all_on_off(&cm.pwr, 1);
 	__main_init_perepherial_modules();
 	Timer_Delay(1, 1000);
-	// дополнительная инициализация переферии
-	for (uint8_var = 0; uint8_var < MPP_DEV_NUM; uint8_var++){
-		mpp_arch_mem_init(&mpp[uint8_var]);
-	}
 	// сброс времени
 	Time_Set(0, &cm.ctrl.diff_time, &cm.ctrl.diff_time_fractional);
 	// регистрация процессов
@@ -130,6 +106,9 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 		switch(cm_ptr->mko_rt.cw.field.sub_addr){
 			case CM_MKO_SA_CMD:
 				switch(cm_ptr->mko_rt.data[0]){
+					case (CMD_TEST):
+						//
+						break;
 					case (CMD_SYNCH_TIME):
 						cm_mko_cmd_synch_time(cm_ptr);
 						break;
@@ -139,14 +118,8 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 					case (CMD_SET_INTERVAL):
 						cm_set_interval_value(cm_ptr, cm_ptr->mko_rt.data[1], cm_ptr->mko_rt.data[2]);
 						break;
-					case (CMD_SET_MPP_OFFSET):
-						if ((cm_ptr->mko_rt.data[1] >= 1) && (cm_ptr->mko_rt.data[1] <= MPP_DEV_NUM)) {
-							mpp_set_offset(&mpp[cm_ptr->mko_rt.data[1] - 1], cm_ptr->mko_rt.data[2]);
-						}
-						break;
 					case (CMD_CONST_MODE):
-						if (cm_ptr->mko_rt.data[1] == 1) mpp_constant_mode(&mpp[0], 1); // команда шировковещательная
-						else if (cm_ptr->mko_rt.data[1] == 0) mpp_constant_mode(&mpp[0], 0);
+						//
 						break;
 					case (CMD_CURRENT_LVL):
 						if ((cm_ptr->mko_rt.data[1] < PWR_CH_NUMBER)){
@@ -160,12 +133,14 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 						}
 						else {}
 						break;
+					default:
+						break;
 				}
 				break;
 			case CM_MKO_SA_ARCH_REQUEST_CM:
 				if (cm_ptr->mko_rt.data[0] == 0){
 					fr_mem_read_data_frame(&cm_ptr->mem, (uint8_t*)&frame);
-					mko_rt_write_to_subaddr(&cm_ptr->mko_rt, CM_MKO_SA_ARCH_REQUEST_CM, (uint16_t*)&frame);
+					mko_rt_write_to_subaddr(&cm_ptr->mko_rt, CM_MKO_SA_ARCH_READ_CM, (uint16_t*)&frame);
 				}
 				break;
 			case CM_MKO_SA_TECH:
@@ -248,6 +223,7 @@ void INT_ADC0_CallBack(void) {
 void INT_MIL0_Callback(void) 
 {
 	mko_rt_transaction_handler(&cm.mko_rt);
+	if (cm.mko_rt.regs->ERROR == 0) stm_temporary_set(&cm.stm[AMKO], 0, 20000);
 }
 
 /**

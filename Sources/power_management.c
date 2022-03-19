@@ -123,12 +123,16 @@ void pwr_init(typePower* pwr_ptr, typeADCStruct* adc_ptr)
 	float adc_a = 0, adc_b = 0;
 	uint16_t bound_arr[PWR_CH_NUMBER] = PWR_CURRENT_BOUND;
 	//
-	pwr_ptr->state = 0x0FFF;
+	pwr_ptr->state = 0x0000;
 	pwr_ptr->status = 0x0000;
+	for (i=0; i<PWR_CH_NUMBER; i++){
+		pwr_ptr->state |= (1<<i);
+	}
 	//
 	for (i=0; i<PWR_CH_NUMBER; i++){
 		__pwr_calc_current_coefficients(r_sh_arr[i], r_fb_arr[i], &adc_a, &adc_b);
 		pwr_ch_init(&pwr_ptr->ch[i], type_arr[i], auto_ctrl_arr[i], port_on_arr[i], num_on_arr[i], port_off_arr[i], num_off_arr[i], adc_ptr, adc_ch_num[i], adc_a, adc_b, bound_arr[i]);
+		
 	}
 	//
 }

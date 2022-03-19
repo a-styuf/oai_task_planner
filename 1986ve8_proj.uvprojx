@@ -440,11 +440,6 @@
               <FilePath>.\Sources\internal_bus.c</FilePath>
             </File>
             <File>
-              <FileName>mpp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Sources\mpp.c</FilePath>
-            </File>
-            <File>
               <FileName>cm.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Sources\cm.c</FilePath>
@@ -493,6 +488,16 @@
               <FileName>spi_fram.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\spi_fram.h</FilePath>
+            </File>
+            <File>
+              <FileName>peripheral_teamplate_ib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\peripheral_teamplate_ib.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\stm.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -950,11 +955,6 @@
               <FilePath>.\Sources\internal_bus.c</FilePath>
             </File>
             <File>
-              <FileName>mpp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Sources\mpp.c</FilePath>
-            </File>
-            <File>
               <FileName>cm.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Sources\cm.c</FilePath>
@@ -1003,6 +1003,16 @@
               <FileName>spi_fram.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\spi_fram.h</FilePath>
+            </File>
+            <File>
+              <FileName>peripheral_teamplate_ib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\peripheral_teamplate_ib.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\stm.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1460,11 +1470,6 @@
               <FilePath>.\Sources\internal_bus.c</FilePath>
             </File>
             <File>
-              <FileName>mpp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Sources\mpp.c</FilePath>
-            </File>
-            <File>
               <FileName>cm.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Sources\cm.c</FilePath>
@@ -1513,6 +1518,16 @@
               <FileName>spi_fram.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\spi_fram.h</FilePath>
+            </File>
+            <File>
+              <FileName>peripheral_teamplate_ib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\peripheral_teamplate_ib.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\stm.c</FilePath>
             </File>
           </Files>
         </Group>

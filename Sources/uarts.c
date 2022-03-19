@@ -5,7 +5,7 @@
   * @brief          : низкоуровневые драйверы для раобты с UART0, UART1/
   *                   UART0 - пакетная передача с использованием таймера, заготовка под ModBus (и в итоге для ВШ)
   *                   UART1 - упрощенный вариант
-  *                 !! Внимание !! данынй модуль испольузет таймер. Данный таймер не должен быть использован в других местах
+  *                 !! **Внимание** !! данынй модуль испольузет таймер. Данный таймер не должен быть использован в других местах
   * @author			    : Стюф Алексей/Alexe Styuf <a-styuf@yandex.ru>
   * @date						: 2022.02.07
   ******************************************************************************
@@ -42,11 +42,11 @@ void UART0_Init() {
   MDR_UART0->LCR_H = (3<<5);  //8bit
   MDR_UART0->IMSC = (1<<4);  //Rx interrupt enable
   MDR_UART0->CR = (1<<9)|(1<<8)|(1<<0);  //enable RX, TX
-  /*Timer*/
-  CLK_CNTR->PER0_CLK |= (1<<26);  //timer3 clock enable
-  CLK_CNTR->TIM3_CLK = (1<<16)| 39;  //timer clock freq = 1 MHz
-  MDR_TMR3->ARR = 1000;  //packet gap = 1 ms
-  MDR_TMR3->CNTRL = 1;  //timer enable
+  /*Timer TMR_0*/
+  CLK_CNTR->PER0_CLK |= (1<<23);  //timer0 clock enable
+  CLK_CNTR->TIM0_CLK = (1<<16)| 39;  //timer clock freq = 1 MHz
+  MDR_TMR0->ARR = 1000;  //packet gap = 1 ms
+  MDR_TMR0->CNTRL = 1;  //timer enable
   /*enable interrupt*/
   NVIC_EnableIRQ(IRQn_UART0);
 }
@@ -65,7 +65,7 @@ void UART0_SendPacket(uint8_t *buff, uint8_t leng) {
 
 int8_t UART0_PacketInWaiting(void)
 {
-	if ((MDR_TMR3->STATUS & (1<<1)) == 0){
+	if ((MDR_TMR0->STATUS & (1<<1)) == 0){
 		return 1;
 	}
 	else {
@@ -75,7 +75,7 @@ int8_t UART0_PacketInWaiting(void)
 
 int8_t UART0_PacketReady(void)
 {
-	if((Rx0BuffPtr) && (MDR_TMR3->STATUS & (1<<1))){
+	if((Rx0BuffPtr) && (MDR_TMR0->STATUS & (1<<1))){
 		return 1;
 	}
 	else {
@@ -85,7 +85,7 @@ int8_t UART0_PacketReady(void)
 
 int8_t UART0_GetPacket(uint8_t *buff, uint8_t *leng) {
   NVIC_DisableIRQ(IRQn_UART0); //
-  if((Rx0BuffPtr)&&(MDR_TMR3->STATUS & (1<<1))) {  //åñòü ÷òî-òî â áóôåðå è ïðåâûøåí ìåæñèìâîëüíûé èíòåðâàë
+  if((Rx0BuffPtr)&&(MDR_TMR0->STATUS & (1<<1))) {  //åñòü ÷òî-òî â áóôåðå è ïðåâûøåí ìåæñèìâîëüíûé èíòåðâàë
     *leng = Rx0BuffPtr;
     Rx0BuffPtr = 0;
     memcpy(buff, Rx0Buff, *leng);
@@ -102,12 +102,12 @@ void INT_UART0_Handler(void) {
   uint8_t rxb;
   if(MDR_UART0->RIS & (1<<4)) {  //ïðåðûâàíèå ïî Rx
     rxb = MDR_UART0->DR;
-    if(MDR_TMR3->STATUS & (1<<1)) {  //timeout
+    if(MDR_TMR0->STATUS & (1<<1)) {  //timeout
       Rx0BuffPtr = 0;
     }
     Rx0Buff[Rx0BuffPtr++] = rxb;
-    MDR_TMR3->CNT = 0;
-    MDR_TMR3->STATUS = 0;
+    MDR_TMR0->CNT = 0;
+    MDR_TMR0->STATUS = 0;
     }
 }
 

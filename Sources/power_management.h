@@ -3,6 +3,7 @@
 
 
 #include "1986ve8_lib/cm4ikmcu.h"
+#include "power_management_settings.h"
 #include "adc.h"
 #include "gpio.h"
 #include "timers.h"
@@ -13,38 +14,6 @@
 #define NU 0  //! функция отключения/включение не предусмотрена
 #define FLAG 1  //! функция отключения/включение реализована установкой сигнала в постоянное значение
 #define PULSE 2  //! функция отключения/включение реализована подачей импульса переключения состояния
-
-#define PWR_PULSE_TIME_MS 20  //! длительность импульса включения/отключения для типа канала 2
-#define PWR_ON_DELAY 250      //! задержка на включение каждого следующего устройства при включении питания
-
-/**
-  * @brief  определяем номера каналов, последнее поле - количество каналов
-*/
-typedef enum PWR_CH
-{
-  PWR_HV1, PWR_HV2, PWR_HV3, PWR_HV4,
-  PWR_CH_NUMBER
-} type_PWR_CH;
-
-/**
-  * @brief  распределение каналов в соответствии с enum PWR_CH
-  * @note   длина совпадает с PWR_CH_NUMBER
-  */
-#define PWR_ADC_CH_NUM {1, 5, 7, 9}
-#define PWR_CAL_RES_SHUNT_OHM {0.5, 0.5, 0.5, 4.7}
-#define PWR_CAL_FB_SHUNT_OHM {51E3, 51E3, 51E3, 10E3}
-
-#define PWR_CURRENT_BOUND {3*150, 3*55, 3*55, 3*36}
-
-#define PWR_GPIO_PORT_ON {NULL, NULL, NULL, NULL}
-#define PWR_GPIO_NUM_ON {NULL, NULL, NULL, NULL}
-
-#define PWR_GPIO_PORT_OFF {NULL, NULL, NULL, PORTE}
-#define PWR_GPIO_NUM_OFF {NULL, NULL, NULL, NULL}
-
-#define PWR_CHANNELS_TYPES {NU, NU, NU, NU}
-#define PWR_AUTO_CTRL {0, 0, 0, 0} //указываем те каналы, которые мы может отключать или включать автоматически
-
 
 #define PWR_PROCESS_PERIOD 200
 

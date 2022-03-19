@@ -8,6 +8,7 @@
 #define IRQn_TMR0 (IRQn_Type)93
 #define IRQn_TMR1 (IRQn_Type)94
 #define IRQn_TMR2 (IRQn_Type)95
+#define IRQn_TMR3 (IRQn_Type)96
 
 #pragma pack(1)
 
@@ -30,5 +31,6 @@ void Timer_Delay(uint8_t num, uint32_t delay_ms);
 void Time_Set(uint64_t time, int16_t* diff_time_s, int8_t* diff_time_low); // time в 1/(2^16) секундах
 uint32_t Get_Time_s(void);
 void Get_Time_sec_parts(uint32_t* sec, uint8_t* parts);
-
+void Timer_PWM_Set(uint8_t ch_num, uint16_t pwm_val);
+void Timer_PWM_Set_Fp(uint8_t ch_num, float pwm_val_fp);
 #endif
