@@ -27,7 +27,7 @@
  * @param B_U коэффициент B для формулы U[V] = A_U * ADC + B_U
  * @param A_I коэффициент A для формулы I[A] = A_I * ADC + B_I
  * @param B_I коэффициент B для формулы U[V] = A_U * ADC + B_U
- * @return int8_t 
+ * @return int8_t статус инициализации (NU, всегда 1)
  */
 int8_t hvip_init(type_HVIP* hvip_ptr, uint8_t mode,
                   typeADCStruct* adc_ptr, uint8_t adc_ch_hv, uint8_t adc_ch_i24, 
@@ -83,7 +83,7 @@ int8_t hvip_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterface
   //
 	if (interval_us > (HVIP_PROCESS_PERIOD_MS*1000)) {
 		hvip_ptr->last_call_time_us = time_us;
-		//
+		// user code
     hvip_process(hvip_ptr, interval_us/1000);
     //
 		return 1;
@@ -119,7 +119,7 @@ void hvip_process(type_HVIP* hvip_ptr, uint16_t period_ms)
   }
   else{
     hvip_ptr->pwm_val_float = 0;
-    pid_refreshet(&hvip_ptr->pid);
+    pid_refresh(&hvip_ptr->pid);
   }
   hvip_ptr->pwm_val = (uint16_t)hvip_ptr->pwm_val_float;  //todo: проблема скачков связана с переходом целой части от 12 к 13, соответственно поблема где-то в обработке дробной части
   // state calculate

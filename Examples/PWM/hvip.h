@@ -14,32 +14,37 @@
 
 //defines
 
+//! периода обработки состояния прогармной модели
 #define HVIP_PROCESS_PERIOD_MS (1000)
 
-// PID Current-stabilisation
+//! PID Current-stabilisation
 #define PID_K 0.1
 #define PID_P 0.005
 #define PID_D 0.0
 #define PID_I 0.0
 #define HVIP_PID_MAX_REACTION 1.0
 
+//! Параметры отслеживания состояни регуляции
 #define HVIP_MAX_VOLTAGE_COEFF (1.3)
 #define HVIP_VOLTAGE_MAX_ERROR (0.1)
 
-// states
-#define HVIP_STATE_HV    1<<0
-#define HVIP_STATE_OVEVRCURRENT 1<<1
-#define HVIP_STATE_FEEDBACKERROR 1<<2
+//! Состояние работы модуля
+#define HVIP_STATE_HV             (1<<0)
+#define HVIP_STATE_OVEVRCURRENT   (1<<1)
+#define HVIP_STATE_FEEDBACKERROR  (1<<2)
 
-// mode
+//! Режимы работы модуля
 #define HVIP_MODE_OFF       0
 #define HVIP_MODE_ON        1
 
-// state_flag
 
 // data structures
 #pragma pack(2)
-typedef struct  // программная модель управления БДД
+/**
+ * @brief программная отчета о работе модуля высоковольтного ВИП
+ * 
+ */
+typedef struct
 {
   uint16_t h_voltage;
   uint16_t current;
@@ -47,24 +52,30 @@ typedef struct  // программная модель управления БД
   uint8_t reserve;
 }type_HVIP_frame_report;
 
-typedef struct  // программная модель управления БДД
+/**
+ * @brief программная модель управления высоковольтного ВИП
+ * 
+ */
+typedef struct 
 {
-	uint8_t mode;
-  uint8_t state;
-  uint8_t pwm_ch_num;
-  uint16_t pwm_val;  // 0-999
-  float pwm_val_float;  // 0-999
-  float v_fb, v_hv, v_hv_desired;
-  float current, max_current;
-  float a_u, b_u, a_i, b_i;
+	uint8_t mode;  //! режим работы
+  uint8_t state;  //! состояние работы модуля
+  uint16_t pwm_val;  //! значение регуляции 0-999 (используется для PWM с количеством шаогов - 1000)
+  float pwm_val_float;  //! 0-999 значение регуляции в типе с плавающей точкой (необходимо дляточной подстройки)
+  float v_fb, v_hv;  //! измеренные параметры работы высоковольтного ВИП
+  float v_hv_desired;  //! желаемое значение на выходе высоковольтного ВИП
+  float current, max_current;  //! потребляемый ток и его верхняя границы
+  float a_u, b_u, a_i, b_i;  //! коэффициенты пересчета сигналов обратной свзяи в реальные значения величин I и U
   //
-  typeADCStruct* adc_ptr;
-  uint8_t adc_ch_hv, adc_ch_i24;
+  uint8_t pwm_ch_num; //! номер канала используемого PWM **аппаратнозависимый**
   //
-  type_SINGLE_GPIO hv_inh;
-  type_PID_model pid;
-  type_HVIP_frame_report report;
-  // поддрежка task_planner
+  typeADCStruct* adc_ptr;  //! указатель на структуру управления АЦП, встроенным в МК
+  uint8_t adc_ch_hv, adc_ch_i24;  //! номера каналов АЦП, используемых для получения обратной связи
+  //
+  type_SINGLE_GPIO hv_inh; //! GPIO для отключения ВИП
+  type_PID_model pid;   //! Структура управления ПИД-регулятором
+  type_HVIP_frame_report report; //! Отчет о работе модуля
+  //! поддрежка task_planner
   uint64_t last_call_time_us;
 }type_HVIP;
 
