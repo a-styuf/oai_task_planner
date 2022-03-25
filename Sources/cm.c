@@ -243,16 +243,20 @@ int8_t cm_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceSt
 	if (cm_ptr->ctrl.speedy_mode_state){
 		if (cm_ptr->ctrl.speedy_event){
 			for (device=0; device<DEV_NUM; device++){
-				if (cm_ptr->ctrl.speedy_mode_state & (1<<device)){
-					interface->event[device] |= CM_EVENT_MEAS_INTERVAL_START;
+				if ((1<<device) & CM_DEVICE_MEAS_MODE_MASK){
+					if (cm_ptr->ctrl.speedy_mode_state & (1<<device)){
+						interface->event[device] |= CM_EVENT_MEAS_INTERVAL_START;
+					}
 				}
 			}
 			cm_ptr->ctrl.speedy_event = 0;
 		}
 		else if (cm_ptr->ctrl.meas_event){
 			for (device=0; device<DEV_NUM; device++){
-				if ((cm_ptr->ctrl.speedy_mode_state & (1<<device)) == 0){
-					interface->event[device] |= CM_EVENT_MEAS_INTERVAL_START;
+				if ((1<<device) & CM_DEVICE_MEAS_MODE_MASK){
+					if ((cm_ptr->ctrl.speedy_mode_state & (1<<device)) == 0){
+						interface->event[device] |= CM_EVENT_MEAS_INTERVAL_START;
+					}
 				}
 			}
 			cm_ptr->ctrl.meas_event = 0;
@@ -262,13 +266,14 @@ int8_t cm_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceSt
 	else{
 		if (cm_ptr->ctrl.meas_event){
 			for (device=0; device<DEV_NUM; device++){
-				interface->event[device] |= CM_EVENT_MEAS_INTERVAL_START;
+				if ((1<<device) & CM_DEVICE_MEAS_MODE_MASK){
+					interface->event[device] |= CM_EVENT_MEAS_INTERVAL_START;
+				}
 			}
 			cm_ptr->ctrl.meas_event = 0;
 		}
 		cm_ptr->ctrl.speedy_event = 0;
-	}
-		
+	}		
 	//** обработка приходящих событий **//
 
 	// self events (device is CM)
@@ -279,7 +284,7 @@ int8_t cm_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceSt
 		cm_frame_receive(cm_ptr, (uint8_t*)&cm_ptr->frame);
 	}
 	// perepherial events
-	for(device = PER_TMPLT; device <= PER_TMPLT; device++){
+	for(device = PER_TMPLT; device < DEV_NUM; device++){
 		if(interface->event[device] & CM_EVENT_MEAS_INTERVAL_DATA_READY){
 			interface->event[device] &= ~CM_EVENT_MEAS_INTERVAL_DATA_READY;
 			cm_frame_receive(cm_ptr, (uint8_t*)&interface->shared_mem[64*device]);

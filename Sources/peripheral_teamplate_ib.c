@@ -111,6 +111,8 @@ int8_t per_tmplt_frame_forming(typePERTMPLTStruct* per_tmplt_ptr)
 		per_tmplt_ptr->frame.row.num = (*per_tmplt_ptr->global_frame_num_ptr++)&0xFFFF;
 		per_tmplt_ptr->frame.row.time = Get_Time_s();
 		//
+		memset((uint8_t*)&per_tmplt_ptr->frame.row.data[0], 0xFE, sizeof(per_tmplt_ptr->frame.row.data));
+		//
 		for (i=0; i<2; i++){
 			per_tmplt_ptr->meas_ptr -= 1;
 			per_tmplt_ptr->frame.per_tmplt.meas[i] = per_tmplt_ptr->meas_buff[per_tmplt_ptr->meas_ptr];	

@@ -28,6 +28,8 @@ void mko_init(typeMKOStruct *mko_ptr, MIL1553Control *regs, uint8_t type, uint8_
   //
 	mko_ptr->regs = regs;
   mko_ptr->type = type;
+  mko_ptr->data_map = (typeDataMap*)&mko_ptr->regs->DATA;
+  memset((uint8_t*)&mko_ptr->regs->DATA[0], 0xFE, sizeof(mko_ptr->regs->DATA));
   // привязка gpio адреса к используемым портам
   for (i=0; i<ADDR_CH_NUMBER; i++){
     gpio_init(&mko_ptr->gpio[i], mko_gpio_port[i], mko_gpio_line[i]);

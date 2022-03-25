@@ -34,7 +34,8 @@ typedef enum devices_list
 } device_list;
 
 //! Управление разрешением работы ускоренного режима для различных устройств
-#define CM_DEVICE_SPEEDY_MODE_MASK 0x06 //! Ускоренный режим работает только для МПП1 и МПП2
+#define CM_DEVICE_MEAS_MODE_MASK 	0x02 	//! модули, работающие по измерительному интервалу (а не альтернативному)
+#define CM_DEVICE_SPEEDY_MODE_MASK 	0x02 	//! Ускоренный режим разрешен для per_tmplt
 
 enum cm_interval_list
 {

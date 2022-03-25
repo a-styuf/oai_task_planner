@@ -60,6 +60,14 @@ typedef union
 	} field;
 }typeAnswerWord;
 
+/** 
+  * @brief  структура с данными для натягивание на регистры DATA для прямого доступак к подадресам
+  */
+typedef struct
+{
+    uint32_t sa[32][32];
+}typeDataMap;
+
 typedef struct  //  max 62 - параетры ЦМ для сохоранения
 {
 	MIL1553Control *regs;
@@ -79,6 +87,7 @@ typedef struct  //  max 62 - параетры ЦМ для сохоранения
 	uint8_t rcv_b;  //+10
 	uint8_t error; //+11
 	uint8_t error_cnt; //+12
+	typeDataMap *data_map;
 	//
 	int need_to_process_flag;
 }typeMKOStruct;
