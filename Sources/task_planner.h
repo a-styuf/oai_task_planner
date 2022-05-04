@@ -1,7 +1,7 @@
 #ifndef _TASK_PLANNER_H_
 #define _TASK_PLANNER_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"  //! в перспективе  избавиться от платформозависимости
+#include "main.h"  //! в перспективе  избавиться от платформозависимости
 #include "timers.h"
 #include "debug.h"
 

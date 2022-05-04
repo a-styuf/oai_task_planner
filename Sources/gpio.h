@@ -1,7 +1,7 @@
 #ifndef _GPIO_H_
 #define _GPIO_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 
 #define GPIO_ON 1
 #define GPIO_OFF 0

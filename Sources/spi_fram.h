@@ -1,7 +1,7 @@
 #ifndef _SPI_FRAM_H_
 #define _SPI_FRAM_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "spi.h"
 #include "gpio.h"
 

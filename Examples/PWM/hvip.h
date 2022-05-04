@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "timers.h"
 #include "adc.h"
 #include "gpio.h"

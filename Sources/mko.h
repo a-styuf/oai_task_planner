@@ -1,7 +1,7 @@
 #ifndef _MKO_H_
 #define _MKO_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "debug.h"
 #include "string.h"
 #include "gpio.h"

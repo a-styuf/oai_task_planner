@@ -8,7 +8,7 @@
 #define _POWER_MANAGER_SETTINGS_H_
 
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 
 #define PWR_PULSE_TIME_MS 20  //! длительность импульса включения/отключения для типа канала 2
 #define PWR_ON_DELAY 250      //! задержка на включение каждого следующего устройства при включении питания

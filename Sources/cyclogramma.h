@@ -2,7 +2,7 @@
 #define _CYCLOGRAMMA_H_
 
 #include <string.h>
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 
 // дефайны для переменных
 #define CYCLO_MAX_STEP 16

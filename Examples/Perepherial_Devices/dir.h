@@ -2,7 +2,7 @@
 #define _DIR_H_
 
 #include <string.h>
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "internal_bus.h"
 #include "task_planner.h"
 #include "cyclogramma.h"

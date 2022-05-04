@@ -1,7 +1,7 @@
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "gpio.h"
 
 #define DEBUG

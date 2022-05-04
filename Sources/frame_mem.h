@@ -1,7 +1,7 @@
 #ifndef _FRAME_MEM_H_
 #define _FRAME_MEM_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "wdt.h"
 #include "frames.h"
 #include "spi_fram.h"

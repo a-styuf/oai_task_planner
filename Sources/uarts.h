@@ -1,7 +1,7 @@
 #ifndef _UARTS_H_
 #define _UARTS_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))

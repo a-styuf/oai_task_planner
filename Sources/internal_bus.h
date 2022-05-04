@@ -2,7 +2,7 @@
 #define _INTERNAL_BUS_H_
 
 #include  <string.h>
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "uarts.h"  //todo: стандартизовать функции к интерфейсу UART для замены на работу с универсальным UART устройством
 #include  "timers.h"
 #include  "task_planner.h"

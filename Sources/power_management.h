@@ -2,7 +2,7 @@
 #define _POWER_MANAGER_H_
 
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "power_management_settings.h"
 #include "adc.h"
 #include "gpio.h"

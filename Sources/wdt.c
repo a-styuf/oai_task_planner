@@ -1,4 +1,4 @@
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 
 //~ 0.8 sec
 #define WD_TIME    25000

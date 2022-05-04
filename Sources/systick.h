@@ -1,7 +1,7 @@
 #ifndef _SYSTICK_H_
 #define _SYSTICK_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 
 /**
  * @brief структура для удобства урпавления регистром управления SysTick-таймера

@@ -15,7 +15,7 @@
  */
 
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include "timers.h"
 
 uint8_t timer_status = 0;  //! глобальная переменная для хранения статусов Таймеров

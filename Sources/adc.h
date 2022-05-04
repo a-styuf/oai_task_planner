@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <math.h>
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 
 #include "debug.h"
 #include "task_planner.h"

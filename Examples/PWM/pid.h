@@ -1,7 +1,7 @@
 #ifndef _PID_H_
 #define _PID_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include <math.h>
 #include "digital_filter.h"
 #include "debug.h"

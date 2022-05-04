@@ -1,7 +1,7 @@
 #ifndef _FRAMES_H_
 #define _FRAMES_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 
 
 #pragma pack(push, 2)

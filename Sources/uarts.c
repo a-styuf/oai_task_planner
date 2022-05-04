@@ -11,7 +11,7 @@
   ******************************************************************************
   */
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include <string.h>
 #include "wdt.h"
 

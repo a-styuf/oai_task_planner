@@ -1,7 +1,7 @@
 #ifndef _CM_H_
 #define _CM_H_
 
-#include "1986ve8_lib/cm4ikmcu.h"
+#include "main.h"
 #include <stdio.h>
 #include <string.h>
 #include "power_management.h"
