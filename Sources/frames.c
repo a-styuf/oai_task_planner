@@ -3,10 +3,10 @@
   * @file           : frames.c
   * @version        : v1.0
   * @brief          : библиотека для работы с кадрами МКО (МПИ)
-  * @note           : данная библиотека обладает зависимостями ко всем процессам, которые передают специлиазипрованные типы данных
+  * @note           : данная библиотека обладает зависимостями ко всем процессам, которые передают специализированные типы данных
   * @note           : данный подход позволяет точно следить за распределением типов данных внутри кадров
-  * @note           : в будущем необходимо подумать о возможности убрать зависимости к переферии, либо передать генерацию кадров непосредственно в модули управления переферией
-  * @author					: Стюф Алексей/Alexe Styuf <a-styuf@yandex.ru>
+  * @note           : в будущем необходимо подумать о возможности убрать зависимости к периферии, либо передать генерацию кадров непосредственно в модули управления периферией
+  * @author					: Стюф Алексей/Alexey Styuf <a-styuf@yandex.ru>
 	* @date						: 2021.09.24
   ******************************************************************************
   */
@@ -14,7 +14,7 @@
 #include "frames.h"
 
 /**
-  * @brief  фугкция генерация определителя кадра
+  * @brief  функция генерация определителя кадра
   * @param  frame_modification модификатор определителя кадра
   * @param  device_number номер устройства для указанного модификатора кадра
   * @param  fabrication_num заводской номер устройства для указанного device_number
@@ -28,7 +28,7 @@ uint16_t frame_definer(uint8_t frame_modification, uint16_t device_number, uint1
 			return ((frame_modification&0x3)<<14) |   // модификатор кадра
 						((device_number&0x03FF)<<4) |  // номер аппаратуры
 						((frame_type&0xF)<<0); // тип кадра
-		case FRAME_DEFINER_BASE_SMAL_SERIES: // для мелкосерийного производства
+		case FRAME_DEFINER_BASE_SMALL_SERIES: // для мелкосерийного производства
 			return (uint16_t)((frame_modification&0x3) << 14) |  // модификатор кадра
                         (uint16_t)((device_number & 0x0F) << 10) |  // номер аппаратуры
                         (uint16_t)((fabrication_num & 0x7F) << 3) |  // заводской номер
@@ -49,7 +49,7 @@ uint8_t frame_get_type_from_definer(typeFrameStruct frame)
 		switch((frame.definer >> 14) & 0x03){
 			case (FRAME_DEFINER_BASE_HUGE_SYSTEMS):
 				return frame.definer & 0x0F;
-			case (FRAME_DEFINER_BASE_SMAL_SERIES):
+			case (FRAME_DEFINER_BASE_SMALL_SERIES):
 				return frame.definer & 0x07;
 			default:
 				return 0;
@@ -76,8 +76,19 @@ uint8_t frame_validate(typeFrameStruct frame)
 	return 1;
 }
 
+/**
+ * @brief функция, переставляющая 16-битные части местами в 32-битном слове
+ * 
+ * @param var исходное 32-битное слово
+ * @return uint32_t результат перестановки
+ */
+uint32_t _rev_u32_by_u16(uint32_t var)
+{
+	return (((var & 0xFFFF) << 16) | ((var >> 16) & 0xFFFF)); 
+}
+
 // CRC16 согласованный с ИСС
-/* CRC16 implementation acording to CCITT standards */
+/* CRC16 implementation according to CCITT standards */
 uint16_t _crc16tab[256]= {
 		0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,
 		0x8108,0x9129,0xa14a,0xb16b,0xc18c,0xd1ad,0xe1ce,0xf1ef,
@@ -112,7 +123,7 @@ uint16_t _crc16tab[256]= {
 		0xef1f,0xff3e,0xcf5d,0xdf7c,0xaf9b,0xbfba,0x8fd9,0x9ff8,
 		0x6e17,0x7e36,0x4e55,0x5e74,0x2e93,0x3eb2,0x0ed1,0x1ef0
 		};
-  
+
 uint16_t frame_crc16(uint8_t *buf, uint8_t len)
 {
 	uint8_t i;

@@ -35,7 +35,7 @@ void mko_init(typeMKOStruct *mko_ptr, MIL1553Control *regs, uint8_t type, uint8_
     gpio_init(&mko_ptr->gpio[i], mko_gpio_port[i], mko_gpio_line[i]);
   }
   //
-	if (mko_addr==0){
+	if ((mko_addr==0) && (mko_gpio_port[0] != NULL)){
 		mko_ptr->addr = mko_get_addr_from_gpio(mko_ptr);
 	}
   else{
@@ -57,7 +57,7 @@ void mko_init(typeMKOStruct *mko_ptr, MIL1553Control *regs, uint8_t type, uint8_
 		CLK_CNTR->PER0_CLK |= (1<<14);  //clock for PORTB
 	}
 	else{
-		// todo: обработчик ошибок
+		// TODO: обработчик ошибок
 	}
 	//
   mko_ptr->regs->CONTROL = 1;  //reset
@@ -83,6 +83,8 @@ void mko_init(typeMKOStruct *mko_ptr, MIL1553Control *regs, uint8_t type, uint8_
   if ((mko_ptr->addr == 0) && (mko_ptr->type == MKO_RT)){ //отключаем МКО
 		mko_ptr->regs->CONTROL = 1;  //reset
 	}
+  //
+  // printf("MKO_<%d>: addr_<%d>\n", type,  mko_addr);
 }
 
 /**
@@ -169,8 +171,9 @@ void mko_bc_transaction_handler(typeMKOStruct *mko_ptr)
 	mko_ptr->msg = mko_ptr->regs->MSG;
 	mko_ptr->rcv_a = ((mko_ptr->regs->STATUS >> 9) & 0x01);
 	mko_ptr->rcv_b = ((mko_ptr->regs->STATUS >> 10) & 0x01);
+  mko_ptr->valmess = (mko_ptr->regs->STATUS >> 2) & 0x01;
 	mko_ptr->error = (mko_ptr->regs->ERROR & 0x3F);
-	if (mko_ptr->regs->ERROR == 0) {
+	if (mko_ptr->valmess == 1) {
 		//
   }
 	else{
@@ -183,7 +186,7 @@ void mko_bc_transaction_handler(typeMKOStruct *mko_ptr)
 /**
   * @brief  чтение данных с подадреса по номеру для КШ
   * @param  mko_ptr указатель на програмную модель устройства
-  * @param  addr адресс устройства
+  * @param  addr адрес устройства
   * @param  subaddr номер субадреса
   * @param  bus номер шины для общения
   * @param  data данные для записи (длина - 32 слова)
@@ -191,18 +194,36 @@ void mko_bc_transaction_handler(typeMKOStruct *mko_ptr)
   */
 void mko_bc_transaction_start(typeMKOStruct *mko_ptr, uint8_t mode, uint8_t addr, uint8_t subaddr, uint8_t bus, uint16_t* data, uint8_t leng)
 {
-  uint8_t i = 0;
-	volatile uint32_t cw = 0;
-  //заоплняем командное слово 1
-	mko_ptr->regs->CONTROL &= ~(0x03 << 4);
+	volatile uint16_t cw = 0;
+  //заполняем командное слово 1
+	cw = (addr << 11) | ((mode & 0x01) << 10) | ((subaddr&0x1F) << 5) | ((leng & 0x1F) << 0);
+  mko_bc_transaction_start_by_cw(mko_ptr, cw, bus, data);
+}
+
+/**
+  * @brief  чтение данных с подадреса по номеру для КШ
+  * @param  mko_ptr указатель на програмную модель устройства
+  * @param  cw командное слово
+  */
+void mko_bc_transaction_start_by_cw(typeMKOStruct *mko_ptr, uint16_t cw_var, uint8_t bus, uint16_t* data)
+{
+  uint8_t i = 0, leng;
+	volatile typeCommandWord cw;
+  //заполняем командное слово
+  mko_ptr->regs->CONTROL &= ~(0x03 << 4);
   mko_ptr->regs->CONTROL |= (((~bus)&0x01)<<4) | (((bus)&0x01)<<5);
-	mko_ptr->cw.whole = (addr << 11) | ((mode & 0x01) << 10) | ((subaddr&0x1F) << 5) | ((leng & 0x1F) << 0);
-  mko_ptr->regs->CommandWord1 = mko_ptr->cw.whole;
+	mko_ptr->cw.whole = cw_var;
+  cw.whole = cw_var;
+  mko_ptr->regs->CommandWord1 = cw.whole;
   mko_ptr->regs->CommandWord2 = 0;
+  leng = ((cw.field.leng  & 0x1F) == 0) ? 32 : (cw.field.leng & 0x1F);
+  
   //
-  if (mode == MKO_MODE_WRITE){
+  if (cw.field.rd_wr == MKO_MODE_WRITE){
+    // printf("cw<%04X>\n", cw.whole);
     for (i=0; i<leng; i++) {
-			mko_ptr->regs->DATA[subaddr*32 + i] = (uint32_t)data[i];
+			mko_ptr->regs->DATA[cw.field.sub_addr*32 + i] = (uint32_t)data[i];
+      // printf("%d<0x%04X>\n", i,  data[i]&0xFFFF);
     }
   }
   // запускаем транзакцию
@@ -210,9 +231,16 @@ void mko_bc_transaction_start(typeMKOStruct *mko_ptr, uint8_t mode, uint8_t addr
   // ожидаем окончания транзакции
   while ((mko_ptr->regs->STATUS &= (1<<0)) ==  0) {}; // ожидание окончания активности канала
   // забираем данные с подадреса
-  if (mode == MKO_MODE_READ){
-    for (i=0; i<leng; i++) {
-			data[i] = mko_ptr->regs->DATA[subaddr*32 + i] & 0xFFFF;
+  if (cw.field.rd_wr == MKO_MODE_READ){
+    if (mko_ptr->valmess) {
+      for (i=0; i<leng; i++) {
+        data[i] = mko_ptr->regs->DATA[cw.field.sub_addr*32 + i] & 0xFFFF;
+      }
+    }
+    else{
+      for (i=0; i<leng; i++) {
+        data[i] = 0xFEFE;
+      }
     }
   }
 }
@@ -281,26 +309,31 @@ uint8_t mko_get_addr_from_gpio(typeMKOStruct *mko_ptr)
 {
 	uint8_t mko_addr = 0x00, connector_parity = 0x00, address_parity = 0x00;
   //
-	mko_addr =  gpio_get(&mko_ptr->gpio[ADDR0])<<0 |
-              gpio_get(&mko_ptr->gpio[ADDR1])<<1 |
-              gpio_get(&mko_ptr->gpio[ADDR2])<<2 |
-              gpio_get(&mko_ptr->gpio[ADDR3])<<3 |
-              gpio_get(&mko_ptr->gpio[ADDR4])<<4 |
-              gpio_get(&mko_ptr->gpio[ADDR5])<<5;
-  //
-  address_parity =  gpio_get(&mko_ptr->gpio[ADDR0])<<0 ^
-                    gpio_get(&mko_ptr->gpio[ADDR1])<<1 ^
-                    gpio_get(&mko_ptr->gpio[ADDR2])<<2 ^
-                    gpio_get(&mko_ptr->gpio[ADDR3])<<3 ^
-                    gpio_get(&mko_ptr->gpio[ADDR4])<<4 ^
-                    gpio_get(&mko_ptr->gpio[ADDR5])<<5;
-  //
-  connector_parity = gpio_get(&mko_ptr->gpio[PARITY]);
-  //
-  if (connector_parity == address_parity){
-    return mko_addr;
+  if (&mko_ptr->gpio[ADDR0].port != NULL){
+    mko_addr =  gpio_get(&mko_ptr->gpio[ADDR0])<<0 |
+                gpio_get(&mko_ptr->gpio[ADDR1])<<1 |
+                gpio_get(&mko_ptr->gpio[ADDR2])<<2 |
+                gpio_get(&mko_ptr->gpio[ADDR3])<<3 |
+                gpio_get(&mko_ptr->gpio[ADDR4])<<4 |
+                gpio_get(&mko_ptr->gpio[ADDR5])<<5;
+    //
+    address_parity =  gpio_get(&mko_ptr->gpio[ADDR0])<<0 ^
+                      gpio_get(&mko_ptr->gpio[ADDR1])<<1 ^
+                      gpio_get(&mko_ptr->gpio[ADDR2])<<2 ^
+                      gpio_get(&mko_ptr->gpio[ADDR3])<<3 ^
+                      gpio_get(&mko_ptr->gpio[ADDR4])<<4 ^
+                      gpio_get(&mko_ptr->gpio[ADDR5])<<5;
+    //
+    connector_parity = gpio_get(&mko_ptr->gpio[PARITY]);
+    //
+    if (connector_parity == address_parity){
+      return mko_addr;
+    }
+    else{
+      return 0;
+    }
   }
-  else{
+    else{
     return 0;
   }
 }
@@ -312,31 +345,32 @@ uint8_t mko_get_addr_from_gpio(typeMKOStruct *mko_ptr)
   */
 void __mko_cmd_msg(typeMKOStruct *mko_ptr)
 {
-    switch (mko_ptr->cw.field.leng){
-      case 2: //передать ответное слово
-        // ничего не делаем, ответное слово передается ядром
-        break;
-      case 4: //блокировать передатчик
-        if (mko_ptr->rcv_a){
-          mko_ptr->regs->CONTROL &= ~(1 << 5); //блокируем передатчик Б
-        }
-        else if(mko_ptr->rcv_b){
-          mko_ptr->regs->CONTROL &= ~(1 << 4); //блокируем передатчик А
-        }
-        break;
-      case 5: //разблокировать передатчик
-        if (mko_ptr->rcv_a){
-          mko_ptr->regs->CONTROL |= (1 << 5); //разблокируем передатчик Б
-        }
-        else if(mko_ptr->rcv_b){
-          mko_ptr->regs->CONTROL |= (1 << 4); //разблокируем передатчик А
-        }
-        break;
-      case 8: //разблокировать передатчик
-        mko_ptr->regs->CONTROL |= 1;  //reset
-        mko_ptr->regs->CONTROL &= ~1; //clear reset
-        break;
-    }
+  // printf("mko cmd msg %d\n", mko_ptr->cw.field.leng);
+  switch (mko_ptr->cw.field.leng){
+    case 2: //передать ответное слово
+      // ничего не делаем, ответное слово передается ядром
+      break;
+    case 4: //блокировать передатчик
+      if (mko_ptr->rcv_a){
+        mko_ptr->regs->CONTROL &= ~(1 << 5); //блокируем передатчик Б
+      }
+      else if(mko_ptr->rcv_b){
+        mko_ptr->regs->CONTROL &= ~(1 << 4); //блокируем передатчик А
+      }
+      break;
+    case 5: //разблокировать передатчик
+      if (mko_ptr->rcv_a){
+        mko_ptr->regs->CONTROL |= (1 << 5); //разблокируем передатчик Б
+      }
+      else if(mko_ptr->rcv_b){
+        mko_ptr->regs->CONTROL |= (1 << 4); //разблокируем передатчик А
+      }
+      break;
+    case 8: //разблокировать передатчик
+      mko_ptr->regs->CONTROL |= 1;  //reset
+      mko_ptr->regs->CONTROL &= ~1; //clear reset
+      break;
+  }
 }
 
 /**

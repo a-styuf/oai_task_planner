@@ -1,9 +1,9 @@
 #ifndef _CM_H_
 #define _CM_H_
 
-#include "main.h"
 #include <stdio.h>
 #include <string.h>
+#include "main.h"
 #include "power_management.h"
 #include "internal_bus.h"
 #include "timers.h"
@@ -13,19 +13,12 @@
 #include "mko.h"
 #include "stm.h"
 
-//***Параметры программы для ЦМ
-//версия прошивки
-#define CM_SW_VERSION 0
-// номер устройства
-#define FRAME_DEV_ID 999 //999 - по умолчанию, необходимо получить номер устройства в системе ОАИ
-// параметры МКО
-#define MKO_ADDRESS_DEFAULT  	13  // 0 - адрес берется с разъема, не 0 - адрес МКО
-//
+
 #define CM_HANDLER_INTERVAL_MS   500
 
 /**
-	* @brief  данная нумерация является общей для всей переферии и позволяет в общих списках понять смезение данного устройства 
-	* @note  данный список также используется для нумерации источников/обработчиков событий от/к переферии (необходимо следить, что бы количество источников не превышало количество доступных событий)
+	* @brief  данная нумерация является общей для всей периферии и позволяет в общих списках понять смещение данного устройства 
+	* @note  данный список также используется для нумерации источников/обработчиков событий от/к периферии (необходимо следить, что бы количество источников не превышало количество доступных событий)
 */
 typedef enum devices_list
 {
@@ -57,30 +50,18 @@ enum cm_interval_list
 #define CM_CFG_FRAME_TYPE							15
 
 //MKO sub_address that are used
+#define CM_MKO_SA_SYS								(CM+1)
 #define CM_MKO_SA_CMD								17
-#define CM_MKO_SA_TECH								30
 #define CM_MKO_SA_ARCH_REQUEST_CM					18
 #define CM_MKO_SA_ARCH_READ_CM						20
+#define CM_MKO_SA_TECH_RD							29
+#define CM_MKO_SA_TECH_CMD							30
 
-// debuf interface base don IB
+// debug interface base don IB
 #define CM_SELF_MB_ID  (1)  // для отладочных команд
 
-//STM
-/**
-  * @brief  нумерация STM-сигналов, используемых в данном устройстве
-*/
-typedef enum stm_list
-{
-	NKBE, 	AMKO,
-	STM_NUM
-} stm_list;
-
-#define STM_IO_PORT 		{PORTB, PORTB}
-#define STM_IO_LINE 		{18, 19}
-#define STM_DEFAULT_VAL 	{1, 1}
-
 // Half-set GPIO setting
-#define HALF_SET_IO_PORT 	PORTB
+#define HALF_SET_IO_PORT 	(PORTB)
 #define HALF_SET_LINE 		(0)
 /**
   * @brief  список отладочных команд через ВШ
@@ -107,24 +88,25 @@ enum mko_cmd_list
 */
 enum mko_tech_cmd_list
 {
-	TCMD_CHECK_MEM, TCMD_SET_OPERATION_TIME, TCMD_SET_STM, 
-	TECH_CMD_NUMBER
+	TCMD_CHECK_MIRROR, TCMD_CHECK_MEM, TCMD_ANY_FRAME_READ, TCMD_SET_OPERATION_TIME,
+	TCMD_SET_STM, TCMD_SET_IB, 
+	TCMD_NUMBER
 };
 
+// статусы ЦМ
+#define CM_STATUS_WORK 					(1<<0)
+#define CM_STATUS_CFG_HALF_SET	 		(1<<1)
+#define CM_STATUS_DEF_AREA_ENA	 		(1<<2)
+#define CM_STATUS_CFG_LOADED	 		(1<<3)
+#define CM_STATUS_FULL			 		(0xFFFF)  //! переменная для полной установки/очистки статуса
 
 // Настройки каналов МПП (необязательно)
-#define MPP_DEV_NUM (2)
-// !!настройки уставкии МПП (offset) количество должно совпадать с MPP_DEV_NUM!!
-#define MPP_DEFAULT_OFFSET {0xF02, 0xF03}
-// адреса МПП на внутренней шине
-#define MPP_ID {2, 2}
-// номер канала, используемый устройством МПП
-#define MPP_CHANNENUM_ID {0, 1}
 
 //структуры кадров
 #pragma pack(push, 2)
 /** 
-  * @brief  структура с данными для кадра ЦМ (!! длина)
+  * @brief  структура с данными для кадра ЦМ (!! длина обрежется по 52 байта)
+  * @note  соседние байтовые поля в МКО меняются местами внутри одного слова
   */
 typedef  struct
 {
@@ -133,9 +115,10 @@ typedef  struct
 	uint16_t power_status;				//+2
 	uint16_t power_state;				//+4
 	//
-	uint16_t nans_status;  		//+6
-	uint8_t nans_counter;  		//+8
-	uint8_t rst_cnter;  		//+9
+	uint8_t nans_counter;  				//+6
+	uint8_t nans_status;  				//+7
+	uint8_t rst_cnter;  				//+8
+	uint8_t cm_status;		  			//+9
 	//
 	uint32_t operation_time;  	//+10
 	//
@@ -150,11 +133,12 @@ typedef  struct
 	uint16_t read_ptr;			//+24
 	uint16_t write_ptr; 		//+26
 	//
-	uint16_t reserve[14];  //+28
+	uint16_t sw_version;				//+28
+	uint16_t reserve[11];  //+30
 }typeCMFrameReport;      //52
 
 /**
- * @brief объединение для свзяки уровней кадров и полезных данных
+  * @brief объединение для связки уровней кадров и полезных данных
  */
 typedef union{
 	typeFrameStruct row;
@@ -195,7 +179,7 @@ typedef union{
 }typeCfgFrameUnion;
 
 /** 
-  * @brief  структура с переменнымиу правления ЦМ
+  * @brief  структура с переменными управления ЦМ
   */
 typedef  struct
 {
@@ -217,11 +201,13 @@ typedef  struct
 	int16_t diff_time;
 	int8_t diff_time_fractional;
 	//
+	uint8_t status;  //! status работы ЦМ
+	//
 	uint32_t operation_time;
 }typeCMControlStruct;
 
 /**
-  * @brief  общая структура програмной модели ЦМ
+  * @brief  общая структура программной модели ЦМ
   */
 typedef struct
 {
@@ -230,6 +216,8 @@ typedef struct
 	uint16_t self_num;          		//! номер устройства с точки зрения ЦМ
 	uint16_t half_set_num;          	//! номер полукомплекта (актуально длс приборов в с холодным резервированием)
 	uint16_t device_number, frame_type; //! параметры прибора, в котором он используется
+	//
+	uint16_t sw_version;
 	//
 	typeSysFrameUnion frame;  //!системный кадр
 	typeCfgFrameUnion current_cfg, loaded_cfg;  //! кадры с параметрами для сохранения
@@ -245,8 +233,8 @@ typedef struct
 	typeMKOStruct mko_rt, mko_bc;
 	typeIBStruct ib;
 	typeFRAME_MEM mem;
-	type_STM_Model stm[STM_NUM];
-	type_SINGLE_GPIO half_set_num_io; //! gpio опроса номера поолукомплекта
+	type_STM_Model stm;
+	type_SINGLE_GPIO half_set_num_io; //! gpio опроса номера полукомплекта
 	//
 	typeCMControlStruct ctrl;
 	//
@@ -255,8 +243,7 @@ typedef struct
 }typeCMModel;
 
 //
-
-void cm_init(typeCMModel* cm_ptr, uint8_t self_num, uint8_t id, uint16_t device_number, uint16_t frame_type);
+void cm_init(typeCMModel* cm_ptr, uint8_t self_num, uint8_t id, uint8_t mko_addr_default, uint16_t device_number, char* ver_str, uint16_t frame_type);
 void cm_reset_parameters(typeCMModel* cm_ptr);
 uint8_t cm_load_cfg(typeCMModel* cm_ptr);
 void cm_save_cfg(typeCMModel* cm_ptr);
@@ -278,10 +265,13 @@ __weak void cm_dbg_ib_command_handler(typeCMModel* cm_ptr);
 // обработка командных сообщений МКО
 __weak void cm_mko_command_interface_handler(typeCMModel *cm_ptr);
 void cm_mko_cmd_synch_time(typeCMModel* cm_ptr);
-// Внутрениие рабочие функции
+uint8_t cm_set_clear_status(typeCMModel* cm_ptr, uint8_t status, uint8_t set_clear);
+// Внутренние рабочие функции
 void _buff_rev16(uint16_t *buff, uint8_t leng_16);
 uint8_t uint16_to_log2_uint8_t(uint16_t var);
 uint16_t get_val_from_bound(uint16_t val, uint16_t min, uint16_t max); //если число внутри границ - используется оно, если нет, то ближайшая граница
+uint16_t check_val_in_bound(uint16_t val, uint16_t min, uint16_t max);
+uint16_t get_version_from_str(char* var_str);
 
 
 #endif

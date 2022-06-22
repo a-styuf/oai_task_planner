@@ -1,11 +1,16 @@
 #ifndef _WDT_H_
 #define _WDT_H_
 
+#include "main.h"
 
-#define WDRST do{WDT->KEY=0x5555; WDT->KEY=0xAAAA;}while(0)
+// Интервал сторожевого таймера ~2.5 sec
+#define WD_TIME    0xFFFF
+//! Для обратной совместимости
+#define WDRST WDT_Reset()
 
 
 int WDT_Init(void);
+void WDT_Reset(void);
 
 
 #endif

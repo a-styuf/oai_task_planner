@@ -1,6 +1,9 @@
 #ifndef _SYSINIT_H_
 #define _SYSINIT_H_
 
+#include "main.h"
+#include "systick.h"
+
 #define SYSINIT_EXTERNAL_CLK 10
 #define SYSINIT_MCU_CLK_MHZ 40
 #define SYSINIT_PLL0_Q (2)  // допустимое значение: 0-15

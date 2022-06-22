@@ -2,6 +2,11 @@
 #define _UARTS_H_
 
 #include "main.h"
+#include <string.h>
+#include "wdt.h"
+
+#define IRQn_UART0 (IRQn_Type)108
+#define IRQn_UART1 (IRQn_Type)109
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -13,8 +18,7 @@ int8_t UART0_PacketReady(void);
 int8_t UART0_GetPacket(uint8_t *buff, uint8_t *leng);
 
 void UART1_Init(void);
-void UART1_SendPacket(uint8_t *buff, uint8_t *leng);
+void UART1_SendPacket(uint8_t *buff, uint8_t leng);
 uint8_t UART1_GetPacket(uint8_t *buff, uint8_t *leng);
 
 #endif
-

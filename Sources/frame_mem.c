@@ -12,7 +12,7 @@
 
 /**
   * @brief  инициализация памяти для работы с архивом и параметрами
-  * @param  mem_ptr указатель на програмную модель памяти
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  mode режим работы памяти
   * @retval статус инициализации
   */
@@ -22,6 +22,8 @@ int8_t fr_mem_init(typeFRAME_MEM* mem_ptr, uint8_t mode)
   //
   mem_ptr->write_ptr = 0;
   mem_ptr->read_ptr = 0;
+  mem_ptr->protected_point_ptr = 0;
+  mem_ptr->protected_point_ena = 0;
   mem_ptr->check_result = 0;
   mem_ptr->check_time = 0;
   mem_ptr->mode = mode;
@@ -30,8 +32,8 @@ int8_t fr_mem_init(typeFRAME_MEM* mem_ptr, uint8_t mode)
 }
 
 /**
-  * @brief  запись произвольного кадра в память БДД
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @brief  запись произвольного кадра в память
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  addr адрес кадра в общей памяти (единица - один кадр)
   * @param  frame указатель на кадр
   * @retval статус инициализации
@@ -42,8 +44,8 @@ int8_t fr_mem_write_any_frame(typeFRAME_MEM* mem_ptr, uint32_t addr, uint8_t* fr
 }
 
 /**
-  * @brief  чтение произвольного кадра из памяти БДД
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @brief  чтение произвольного кадра из памяти
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  addr адрес кадра в общей памяти (единица - один кадр)
   * @param  frame указатель на кадр
   * @retval статус инициализации
@@ -55,7 +57,7 @@ int8_t fr_mem_read_any_frame(typeFRAME_MEM* mem_ptr, uint32_t addr, uint8_t* fra
 
 /**
   * @brief  запись кадра информации в архивную память по указателю записи
-  * @param  mem_ptr указатель на програмную модель памяти
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  frame указатель на кадр
   * @retval 1 - кадр записан, 0 - кадр не записан
   */
@@ -75,7 +77,7 @@ int8_t fr_mem_write_data_frame(typeFRAME_MEM* mem_ptr, uint8_t* frame)
 
 /**
   * @brief  чтение кадра информации из архивной памяти  по указателю чтения
-  * @param  mem_ptr указатель на програмную модель памяти
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  frame указатель на кадр
   * @retval 1 - прочтется новый кадр, 0 - прочтется старый кадр
   */
@@ -94,7 +96,7 @@ int8_t fr_mem_read_data_frame(typeFRAME_MEM* mem_ptr, uint8_t* frame)
 
 /**
   * @brief  инкрементация указателя записи
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @param  mem_ptr указатель на программную модель памяти
   * @retval 1 - кадр можно писать, 0 - кадр не должен быть записан
   */
 int8_t fr_mem_incr_wr_ptr(typeFRAME_MEM* mem_ptr)
@@ -102,34 +104,65 @@ int8_t fr_mem_incr_wr_ptr(typeFRAME_MEM* mem_ptr)
   uint32_t prot_area_ptr = 0;
   //
   prot_area_ptr = __fr_mem_calc_prot_area_ptr(mem_ptr);
-  if ((mem_ptr->write_ptr >= prot_area_ptr) && (mem_ptr->write_ptr < mem_ptr->read_ptr)){
-    return 0;
-  }
-  else{
-    fr_mem_set_wr_ptr(mem_ptr, mem_ptr->write_ptr + 1);
-    return 1;
-  }
+  switch (mem_ptr->mode){
+    case(FR_MEM_TYPE_WR_TO_RD_WITH_PROT_AREA):
+      if ((mem_ptr->write_ptr >= prot_area_ptr) && (mem_ptr->write_ptr < mem_ptr->read_ptr)){
+        return 0;
+      }
+      else{
+        fr_mem_set_wr_ptr(mem_ptr, mem_ptr->write_ptr + 1);
+        return 1;
+      }
+      // break;
+    case(FR_MEM_TYPE_WR_TO_RD_WITH_PROT_POINT):
+      if ((mem_ptr->write_ptr >= prot_area_ptr) && (mem_ptr->write_ptr < mem_ptr->protected_point_ptr) && (mem_ptr->protected_point_ena)){
+        return 0;
+      }
+      else{
+        fr_mem_set_wr_ptr(mem_ptr, mem_ptr->write_ptr + 1);
+        return 1;
+      }
+      // break;
+		}
+	return 0;
 }
 
 /**
-  * @brief  инкрементация указателя записи
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @brief  определение точки защищенной области
+  * @param  mem_ptr указатель на программную модель памяти
   */
 uint32_t __fr_mem_calc_prot_area_ptr(typeFRAME_MEM* mem_ptr)
 {
   uint32_t prot_area_ptr = 0;
-  if ((int32_t)(mem_ptr->read_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM) >= 0){
-    prot_area_ptr = mem_ptr->read_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM;
-  }
-  else {
-    prot_area_ptr = FRAM_TOTAL_VOLUME_FRAMES + (mem_ptr->read_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM);
+  switch (mem_ptr->mode){
+    case(FR_MEM_TYPE_WR_TO_RD_WITH_PROT_AREA):
+      if ((int32_t)(mem_ptr->read_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM) >= 0){
+        prot_area_ptr = mem_ptr->read_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM;
+      }
+      else {
+        prot_area_ptr = FRAM_TOTAL_VOLUME_FRAMES + (mem_ptr->read_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM);
+      }
+    break;
+    case(FR_MEM_TYPE_WR_TO_RD_WITH_PROT_POINT):
+      if (mem_ptr->protected_point_ena){
+        if ((int32_t)(mem_ptr->protected_point_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM) >= 0){
+          prot_area_ptr = mem_ptr->protected_point_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM;
+        }
+        else {
+          prot_area_ptr = FRAM_TOTAL_VOLUME_FRAMES + (mem_ptr->protected_point_ptr - FR_MEM_PROTECTED_AREA_FRAME_NUM);
+        }
+      }
+      else{
+        prot_area_ptr = 0;
+      }
+    break;
   }
   return prot_area_ptr;
 }
 
 /**
   * @brief  инкрементация указателя чтения
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @param  mem_ptr указатель на программную модель памяти
   * @retval 1 - прочтется новый кадр, 0 - прочтется старый кадр
   */
 int8_t fr_mem_incr_rd_ptr(typeFRAME_MEM* mem_ptr)
@@ -145,9 +178,9 @@ int8_t fr_mem_incr_rd_ptr(typeFRAME_MEM* mem_ptr)
 
 /**
   * @brief  установка указателя чтения
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  ptr_val значение указателя для установки
-  * @retval  0 - линейное увелечение указателя, 1 - сброс указателя на начало памяти
+  * @retval  0 - линейное увеличение указателя, 1 - сброс указателя на начало памяти
   */
 int8_t fr_mem_set_rd_ptr(typeFRAME_MEM* mem_ptr, uint32_t ptr_val)
 {
@@ -161,9 +194,9 @@ int8_t fr_mem_set_rd_ptr(typeFRAME_MEM* mem_ptr, uint32_t ptr_val)
 
 /**
   * @brief  установка указателя записи
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  ptr_val значение указателя для установки
-  * @retval  0 - линейное увелечение указателя, 1 - сброс указателя на начало памяти
+  * @retval  0 - линейное увеличение указателя, 1 - сброс указателя на начало памяти
   */
 int8_t fr_mem_set_wr_ptr(typeFRAME_MEM* mem_ptr, uint32_t ptr_val)
 {
@@ -176,17 +209,43 @@ int8_t fr_mem_set_wr_ptr(typeFRAME_MEM* mem_ptr, uint32_t ptr_val)
 }
 
 /**
+ * @brief Установка защищенной точки
+ * 
+ * @param mem_ptr 
+ */
+void fr_mem_set_protected_point(typeFRAME_MEM* mem_ptr)
+{
+  if (mem_ptr->protected_point_ena == 0){
+    mem_ptr->protected_point_ena = 1;
+    mem_ptr->protected_point_ptr = mem_ptr->write_ptr;
+    // printf("set_prot_point <%d>\n", mem_ptr->protected_point_ptr);
+  }
+}
+
+/**
+ * @brief Сброс защищенной точки
+ * 
+ * @param mem_ptr 
+ */
+void fr_mem_release_protected_point(typeFRAME_MEM* mem_ptr)
+{
+  mem_ptr->protected_point_ena = 0;
+  mem_ptr->protected_point_ptr = 0;
+  // printf("release_prot_point\n");
+}
+
+/**
   * @brief  установка указателя чтения в начало защищенной области
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @param  mem_ptr указатель на программную модель памяти
   */
-void fr_mem_set_rd_ptr_to_defence_area(typeFRAME_MEM* mem_ptr)
+void fr_mem_set_rd_ptr_to_defense_area(typeFRAME_MEM* mem_ptr)
 {
     fr_mem_set_rd_ptr(mem_ptr, __fr_mem_calc_prot_area_ptr(mem_ptr));
 }
 
 /**
   * @brief  неразрушающая проверка памяти
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @param  mem_ptr указатель на программную модель памяти
   * @retval результат проверки:  0 - норма, не 0 - номер первого кадра с проблемой
   */
 uint32_t fr_mem_check(typeFRAME_MEM* mem_ptr)
@@ -223,7 +282,7 @@ uint32_t fr_mem_check(typeFRAME_MEM* mem_ptr)
 /**
   * @brief  форматирование памяти, а также сброс указателей
   * @details первые 4 байта в кадре - его номер в памяти, остальные заполнены 0xFEFE
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @param  mem_ptr указатель на программную модель памяти
   */
 void fr_mem_format(typeFRAME_MEM* mem_ptr)
 {
@@ -252,8 +311,8 @@ void fr_mem_format(typeFRAME_MEM* mem_ptr)
 }
 
 /**
-  * @brief  сохранение парметров в начало каждой из физических памятей
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @brief  сохранение параметров в начало каждой из физических памятей
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  frame указатель на кадра размером 64 байта для записи
   */
 void fr_mem_param_save(typeFRAME_MEM* mem_ptr, uint8_t* frame)
@@ -266,8 +325,8 @@ void fr_mem_param_save(typeFRAME_MEM* mem_ptr, uint8_t* frame)
 }
 
 /**
-  * @brief  чтение парметров из начала каждой из физических памятей с последующей проверкой по CRC
-  * @param  mem_ptr указатель на програмную модель памяти БДД
+  * @brief  чтение параметров из начала каждой из физических памятей с последующей проверкой по CRC
+  * @param  mem_ptr указатель на программную модель памяти
   * @param  frame указатель на кадра размером 64 байта для полученных параметров
   * @retval  >= 0 - номер памяти из которой произошла загрузка параметров; <0 - загрузка параметров не удалась
   */
@@ -292,9 +351,9 @@ int8_t fr_mem_param_load(typeFRAME_MEM* mem_ptr, uint8_t* frame)
 
 // static
 /**
-  * @brief  получение абослютного адреса из указателя записи/чтения
+  * @brief  получение абсолютного адреса из указателя записи/чтения
   * @param  ptr указатель на кадр
-  * @retval абсолютный адрес кадра в памяти БДД
+  * @retval абсолютный адрес кадра в памяти
   */
 uint32_t _get_addr_from_ptr(uint32_t ptr)
 {

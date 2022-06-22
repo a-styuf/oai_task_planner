@@ -19,7 +19,7 @@
 #include "timers.h"
 
 uint8_t timer_status = 0;  //! глобальная переменная для хранения статусов Таймеров
-uint8_t high_byte_time_s = 0;  //! глобальная переменная для хранения старшей части глобального времени
+uint8_t high_byte_time = 0;  //! глобальная переменная для хранения старшей части глобального времени
 uint8_t pwm_adder[4] = {0}, pwm_adder_cnter[4] = {0};
 uint16_t CCR1_base[4] = {0};
 uint32_t *TMR_CCR[4] = {    (uint32_t *)(MDR_TMR3_BASE + 0x0010), 
@@ -29,7 +29,7 @@ uint32_t *TMR_CCR[4] = {    (uint32_t *)(MDR_TMR3_BASE + 0x0010),
                         };
 
 /**
- * @brief инициализация таймеров для испльзования в программе
+ * @brief инициализация таймеров для использования в программе
  * TMR0 - используются для работы внутренней шины (здесь не представлен)
  * TMR1 - для общего использования
  * TMR2 - для общего использования
@@ -79,8 +79,8 @@ void Timers_Init(void)
 }
 
 /**
- * @brief обработчки прерывания от таймеров
- *  - взводятит статус о том, что таймеы досчитал
+* @brief обработчик прерывания от таймеров
+ *  - взводятит статус о том, что таймеры досчитал
  * 
  */
 void INT_TMR1_Handler(void) 
@@ -93,7 +93,7 @@ void INT_TMR1_Handler(void)
 
 void INT_TMR2_Handler(void) 
 {
-    high_byte_time_s += 1;   
+    high_byte_time += 1;
 }
 
 void INT_TMR3_Handler(void) 
@@ -112,20 +112,13 @@ void INT_TMR3_Handler(void)
 /**
  * @brief Работа с заданием задержек. Универсально для TMR0, TMR1
  * 
- * @param num 0 - TMR0, 1 - TMR1
+ * @param num 1 - TMR1
  * @param time_ms задержка в мс
  */
 void Timers_Start(uint8_t num, uint32_t time_ms)
 {  
     switch (num)
     {
-        case 0:
-            NVIC_DisableIRQ(IRQn_TMR0);
-            MDR_TMR0->ARR = time_ms;  //задание времени в мс
-            MDR_TMR0->CNT = 0x00000000;  //Начальное значение счетчика
-            MDR_TMR0->CNTRL = 0x00000001;  //Счет вверх по TIM_CLK. Разрешение работы таймера
-            NVIC_EnableIRQ(IRQn_TMR0);
-            break;
         case 1:
             NVIC_DisableIRQ(IRQn_TMR1);
             MDR_TMR1->ARR = time_ms;  //задание времени в мс
@@ -139,19 +132,12 @@ void Timers_Start(uint8_t num, uint32_t time_ms)
 /**
  * @brief Остановка работы таймера по номеру.
  * 
- * @param num  0 - TMR0, 1 - TMR1
+ * @param num  1 - TMR1
  */
 void Timers_Stop(uint8_t num)
 {  
     switch (num)
     {
-        case 0:
-            NVIC_DisableIRQ(IRQn_TMR0);
-            MDR_TMR0->CNTRL = 0x00000000;  //Счет вверх по TIM_CLK. Разрешение работы таймера
-            MDR_TMR0->ARR = 0x00;  //задание времени в мс
-            MDR_TMR0->CNT = 0x00000000;  //Начальное значение счетчика
-            NVIC_EnableIRQ(IRQn_TMR0);
-            break;
         case 1:
             NVIC_DisableIRQ(IRQn_TMR1);
             MDR_TMR1->CNTRL = 0x00000000;  //Счет вверх по TIM_CLK. Разрешение работы таймера
@@ -165,22 +151,21 @@ void Timers_Stop(uint8_t num)
 /**
  * @brief проверка работы таймера
  * 
- * @param num 0 - TMR0, 1 - TMR1
- * @return uint8_t 0 - таймер еще считает; 1-закончил счет
+ * @param num 1 - TMR1
+ * @return uint8_t 1 - таймер еще считает; 0-закончил счет
  */
 uint8_t Timers_Status(uint8_t num)
 {
-    uint8_t status = 0x0000;
-    NVIC_DisableIRQ(IRQn_TMR0);
-    NVIC_DisableIRQ(IRQn_TMR1);
-    status = (timer_status & (1 << num));
-    if (status != 0)
-    {
-        timer_status &= ~(1 << num);
+    switch(num){
+        case 1:
+            if ((MDR_TMR1->CNT == 0x00) && (MDR_TMR1->CNTRL == 0x00)){
+                return 0;
+            }
+            else{
+                return 1<<1;
+            }
     }
-    NVIC_EnableIRQ(IRQn_TMR0);
-    NVIC_EnableIRQ(IRQn_TMR1);
-    return status;
+    return 0;
 }
 
 
@@ -192,7 +177,7 @@ uint8_t Timers_Status(uint8_t num)
 void Timer_Delay(uint8_t num, uint32_t delay_ms)
 {
     Timers_Start(num, delay_ms); 
-    while (Timers_Status(num) == 0);
+    while (Timers_Status(num) & (1<<num));
 }
 
 /**
@@ -212,23 +197,25 @@ void Time_Set(uint64_t time, int16_t* diff_time_s, int8_t* diff_time_low)
     //
     cm_time.low_part = 0x00;
     cm_time.mid_part = MDR_TMR2->CNT;
-    cm_time.high_part = high_byte_time_s;
+    cm_time.high_part = high_byte_time;
     cm_time.zero_part = 0x0000;
     //
     memcpy((uint8_t*)&current_time, (uint8_t*)&cm_time, 8);
     diff_time = time - current_time;
     //сохраняем системные данные связанные с синхронизацией
-    *diff_time_s = (diff_time  >> 16) & 0xFFFF;
-    *diff_time_low = (diff_time >> 8) & 0xFF;
+    if ((*diff_time_s != NULL) && (*diff_time_s != NULL)) {
+        *diff_time_s = (diff_time  >> 16) & 0xFFFF;
+        *diff_time_low = (diff_time >> 8) & 0xFF;
+    }
     //сохраняем системные данные связанные с синхронизацией
     MDR_TMR2->CNT = (time >> 8) & 0xFFFFFFFF;
-    high_byte_time_s = (time >> 40) & 0xFF;
+    high_byte_time = (time >> 40) & 0xFF;
     //
     NVIC_EnableIRQ(IRQn_TMR2);
 }
 
 /**
- * @brief Возвразающает значение текущего времени в секундаъ
+ * @brief Возвращает значение текущего времени в секундах
  * @note получаем время от таймера, а потом обрезаем до секунд 
  * @return uint32_t текущее время в секундах
  */
@@ -236,12 +223,12 @@ uint32_t Get_Time_s(void) // получаем время от таймера, а
 {
     uint32_t time_s = 0, time_s_old = 0;
     time_s_old = MDR_TMR2->CNT;
-    time_s = ((uint64_t)high_byte_time_s << 24) + ((time_s_old >> 8) & 0xFFFFFF);
+    time_s = ((uint64_t)high_byte_time << 24) + ((time_s_old >> 8) & 0xFFFFFF);
     return time_s; // переставляем по 16 бит для заполнения поля времени кадров
 }
 
 /**
- * @brief Функция для получения времени в секундах (sec), и дробной части времени в 1/256 секнды (parts)
+ * @brief Функция для получения времени в секундах (sec), и дробной части времени в 1/256 секунды (parts)
  * 
  * @param sec указатель на переменную куда будет записано значение текущего времени в секундах
  * @param parts указатель на переменную куда будет записано дробная часть текущего времени в 1/256 секунды
@@ -251,7 +238,7 @@ void Get_Time_sec_parts(uint32_t* sec, uint8_t* parts) // получение п�
     uint32_t time_s_old = 0, time_s = 0;
 	
     time_s_old = MDR_TMR2->CNT;
-	time_s = ((uint32_t)high_byte_time_s << 24) + ((time_s_old >> 8) & 0xFFFFFF); 
+	time_s = ((uint32_t)high_byte_time << 24) + ((time_s_old >> 8) & 0xFFFFFF); 
     *sec = time_s;
     *parts = time_s_old & 0xFF;
 }
@@ -260,7 +247,7 @@ void Get_Time_sec_parts(uint32_t* sec, uint8_t* parts) // получение п�
 /**
   * @brief  установка значения PWM для таймера 2
   * @param  ch_num номер канала PWM
-  * @param  pwm_val знчение заполеннности PWM; 0-99 в 1%
+  * @param  pwm_val значение заполненности PWM; 0-99 в 1%
   */
 void Timer_PWM_Set(uint8_t ch_num, uint16_t pwm_val)
 {   
@@ -275,7 +262,7 @@ void Timer_PWM_Set(uint8_t ch_num, uint16_t pwm_val)
 /**
   * @brief  установка значения PWM для таймера 2 в float
   * @param  ch_num номер канала PWM
-  * @param  pwm_val_fp знчение заполеннности PWM; 0-99 в 1%, дробная часть также пработает до точности 1/(1<<16)
+  * @param  pwm_val_fp значение заполненности PWM; 0-99 в 1%, дробная часть также работает до точности 1/(1<<16)
   */
 void Timer_PWM_Set_Fp(uint8_t ch_num, float pwm_val_fp)
 {   

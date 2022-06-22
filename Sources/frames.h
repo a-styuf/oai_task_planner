@@ -7,7 +7,7 @@
 #pragma pack(push, 2)
 
 #define FRAME_DEFINER_BASE_HUGE_SYSTEMS   0
-#define FRAME_DEFINER_BASE_SMAL_SERIES    1
+#define FRAME_DEFINER_BASE_SMALL_SERIES    1
 
 /**
   * @brief  структура шаблона кадра кадра
@@ -31,5 +31,7 @@ uint16_t frame_definer(uint8_t frame_modification, uint16_t device_number,  uint
 uint16_t frame_crc16(uint8_t *buf, uint8_t len);
 uint8_t frame_get_type_from_definer(typeFrameStruct frame);
 uint8_t frame_validate(typeFrameStruct frame);
+// статические вспомогательные функции для составления кадров
+uint32_t _rev_u32_by_u16(uint32_t var);
 
 #endif

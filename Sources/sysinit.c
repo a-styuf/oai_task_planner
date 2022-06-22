@@ -9,7 +9,8 @@ const uint64_t ExtBusCfgCode[] __attribute__ ((at(0x10000400))) =
 
 extern uint32_t __Vectors;
 
-void System_Init() {
+void System_Init() 
+{
   *((uint32_t*)0xE000ED08) = (uint32_t)&__Vectors;
 
   BKP->KEY = _KEY_;
@@ -102,7 +103,7 @@ void System_Init() {
   CLK_CNTR->CPU_CLK = 0;  //Core clock: MAX_CLOCK
 
   /*---------- SysTick ----------*/
-  SysTick_Config(SYSINIT_SYS_TICK_100US_VALUE);  //set 1ms period
+  systick_init(SYSINIT_MCU_CLK_MHZ, 100);
 
   /*---------- Clock for ADC0 -------------*/
   CLK_CNTR->ADC0_CLK = ((uint32_t)1<<28)|(1<<16)| 7;  //HSE0 clock for ADC, freq=0.5 MHz

@@ -2,30 +2,24 @@
   ******************************************************************************
   * @file           : uarts.c
   * @version        : v1.0
-  * @brief          : низкоуровневые драйверы для раобты с UART0, UART1/
+  * @brief          : низкоуровневые драйверы для работы с UART0, UART1/
   *                   UART0 - пакетная передача с использованием таймера, заготовка под ModBus (и в итоге для ВШ)
   *                   UART1 - упрощенный вариант
-  *                 !! **Внимание** !! данынй модуль испольузет таймер. Данный таймер не должен быть использован в других местах
-  * @author			    : Стюф Алексей/Alexe Styuf <a-styuf@yandex.ru>
+  *                 !! **Внимание** !! данный модуль использует таймер. Данный таймер не должен быть использован в других местах
+  * @author			    : Стюф Алексей/Alexey Styuf <a-styuf@yandex.ru>
   * @date						: 2022.02.07
   ******************************************************************************
   */
 
-#include "main.h"
-#include <string.h>
-#include "wdt.h"
-
-
-#define IRQn_UART0 (IRQn_Type)108
-#define IRQn_UART1 (IRQn_Type)109
-
+#include "uarts.h"
 
 uint8_t Rx0Buff[256];
 uint8_t Rx0BuffPtr;
-uint16_t CRC16;
 
 uint8_t Rx1Buff[256];
 uint8_t Rx1BuffPtr;
+
+uint16_t CRC16;
 
 void GetCRC(uint8_t *data, int len);
 
@@ -85,7 +79,7 @@ int8_t UART0_PacketReady(void)
 
 int8_t UART0_GetPacket(uint8_t *buff, uint8_t *leng) {
   NVIC_DisableIRQ(IRQn_UART0); //
-  if((Rx0BuffPtr)&&(MDR_TMR0->STATUS & (1<<1))) {  //åñòü ÷òî-òî â áóôåðå è ïðåâûøåí ìåæñèìâîëüíûé èíòåðâàë
+  if((Rx0BuffPtr)&&(MDR_TMR0->STATUS & (1<<1))) {
     *leng = Rx0BuffPtr;
     Rx0BuffPtr = 0;
     memcpy(buff, Rx0Buff, *leng);
@@ -152,7 +146,7 @@ void UART1_SendPacket(uint8_t *buff, uint8_t leng)
 }
 
 /**
- * @brief прием данныхчерез ядро UART, копирование из буфера, который собирается прерываниями
+ * @brief прием данных через ядро UART, копирование из буфера, который собирается прерываниями
  * 
  * @param buff указатель на массив для сохранения данных
  * @param *leng указатель на переменную с количество

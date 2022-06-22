@@ -10,8 +10,8 @@
 #include "spi_fram.h"
 
 /**
-  * @brief  инициализация програмной модели работы с fram
-  * @param  fram_ptr указатель на програмную модель устройства
+  * @brief  инициализация программной модели работы с fram
+  * @param  fram_ptr указатель на программную модель устройства
   * @retval статус инициализации
   */
 int8_t fram_init(type_FRAM* fram_ptr)
@@ -30,7 +30,7 @@ int8_t fram_init(type_FRAM* fram_ptr)
 
 /**
   * @brief  запись в отдельный чип памяти fram
-  * @param  fram_ptr указатель на програмную модель устройства
+  * @param  fram_ptr указатель на программную модель устройства
   * @param  mem_num  номер чипа в массиве fram-памятей
   * @param  fram_addr  байтовый адрес внутри fram
   * @param  data_ptr  указатель на массив данных
@@ -51,7 +51,7 @@ void fram_write(type_FRAM* fram_ptr, uint8_t mem_num, uint32_t fram_addr, uint8_
 
 /**
   * @brief  чтение из отдельный чип памяти fram
-  * @param  fram_ptr указатель на програмную модель устройства
+  * @param  fram_ptr указатель на программную модель устройства
   * @param  mem_num  номер чипа в массиве fram-памятей
   * @param  fram_addr  байтовый адрес внутри fram
   * @param  data_ptr  указатель на массив данных
@@ -70,7 +70,7 @@ void fram_read(type_FRAM* fram_ptr, uint8_t mem_num, uint32_t fram_addr, uint8_t
 
 /**
   * @brief  запись кадра в общую память
-  * @param  fram_ptr указатель на програмную модель устройства
+  * @param  fram_ptr указатель на программную модель устройства
   * @param  addr_fr адрес в кадрах
   * @param  data_ptr указатель на массив данных (длиной в количество кадров)
   */
@@ -96,7 +96,7 @@ int8_t fram_write_frame(type_FRAM* fram_ptr, uint32_t addr_fr, uint8_t *data_ptr
 
 /**
   * @brief  чтение кадра из общей памяти
-  * @param  fram_ptr указатель на програмную модель устройства
+  * @param  fram_ptr указатель на программную модель устройства
   * @param  addr_fr адрес в кадрах
   * @param  data_ptr указатель на массив данных (длиной в количество кадров)
   */

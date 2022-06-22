@@ -18,13 +18,13 @@
   */
 void ib_init(typeIBStruct* ib_ptr)
 {
-  ib_reset_parameters(ib_ptr);
-  ib_ptr->uart.init = UART0_Init;
-  ib_ptr->uart.send_packet = UART0_SendPacket;
-  ib_ptr->uart.get_packet = UART0_GetPacket;
-  ib_ptr->uart.packet_in_waiting = UART0_PacketInWaiting;
-  ib_ptr->uart.packet_ready = UART0_PacketReady;
-  ib_ptr->uart.init();
+	ib_reset_parameters(ib_ptr);
+	ib_ptr->uart.init = UART0_Init;
+	ib_ptr->uart.send_packet = UART0_SendPacket;
+	ib_ptr->uart.get_packet = UART0_GetPacket;
+	ib_ptr->uart.packet_in_waiting = UART0_PacketInWaiting;
+	ib_ptr->uart.packet_ready = UART0_PacketReady;
+	ib_ptr->uart.init();
 }
 
 /**
@@ -34,7 +34,7 @@ void ib_init(typeIBStruct* ib_ptr)
   */
 int8_t ib_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceStruct* interface)
 {
-  typeIBStruct* ib_ptr = (typeIBStruct*)ctrl_struct;
+	typeIBStruct* ib_ptr = (typeIBStruct*)ctrl_struct;
 	if ((time_us - ib_ptr->last_call_time_us) > (IB_PROCESS_PERIOD*1000)) {
 		ib_ptr->last_call_time_us = time_us;
     ib_run_transaction(ib_ptr, MB_DEV_ID_NU, MB_F_CODE_IDLE, NULL, NULL, NULL);
@@ -51,35 +51,35 @@ int8_t ib_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceSt
   */
 void ib_reset_parameters(typeIBStruct* ib_ptr)
 {
-  ib_ptr->last_call_time_us = 0;
-  //
-  ib_ptr->error_counter = 0;
-  ib_ptr->nans_counter = 0;
-  ib_ptr->error_status = 0;
-  ib_ptr->nans_status = 0;
-  //
-  ib_ptr->tx_counter = 0;
-  ib_ptr->rx_counter = 0;
-  ib_ptr->command_counter = 0;
-  //
+	ib_ptr->last_call_time_us = 0;
+	//
+	ib_ptr->error_counter = 0;
+	ib_ptr->nans_counter = 0;
+	ib_ptr->error_status = 0;
+	ib_ptr->nans_status = 0;
+	//
+	ib_ptr->tx_counter = 0;
+	ib_ptr->rx_counter = 0;
+	ib_ptr->command_counter = 0;
+	//
 	ib_ptr->global_dbg_flag = IB_GLOBAL_DBG_DEFAULT;
 	//
 	ib_ptr->command_frame_flag = 0;
 	//
-  memset(ib_ptr->tx_data, 0x00, 256);
-  memset(ib_ptr->rx_data, 0x00, 256);
-  ib_ptr->tx_len = 0;
-  ib_ptr->rx_len = 0;
-  //
-  memset((uint8_t*)&ib_ptr->rx_frame, 0x00, sizeof(typeModBusFrameStruct));
-  memset((uint8_t*)&ib_ptr->tx_frame, 0x00, sizeof(typeModBusFrameStruct));
-  memset((uint8_t*)&ib_ptr->command_frame, 0x00, sizeof(typeModBusFrameStruct));
+	memset(ib_ptr->tx_data, 0x00, 256);
+	memset(ib_ptr->rx_data, 0x00, 256);
+	ib_ptr->tx_len = 0;
+	ib_ptr->rx_len = 0;
+	//
+	memset((uint8_t*)&ib_ptr->rx_frame, 0x00, sizeof(typeModBusFrameStruct));
+	memset((uint8_t*)&ib_ptr->tx_frame, 0x00, sizeof(typeModBusFrameStruct));
+	memset((uint8_t*)&ib_ptr->command_frame, 0x00, sizeof(typeModBusFrameStruct));
 }
 
 /**
-  * @brief  запук транзакции передачи данных
+  * @brief  запуск транзакции передачи данных
 	* @param  ib_ptr указатель на структуру управления
-	* @param  dev_id адрес утсройства
+	* @param  dev_id адрес устройства
 	* @param  f_code код команды
 	* @param  reg_addr адрес начального регистра для передачи
 	* @param  reg_cnt количество регистров для передачи (проверяется только для команд с передачей/чтением нескольких регистров)
@@ -89,12 +89,12 @@ void ib_reset_parameters(typeIBStruct* ib_ptr)
 int8_t ib_run_transaction(typeIBStruct* ib_ptr, uint8_t dev_id, uint8_t f_code, uint16_t reg_addr, uint16_t reg_cnt, uint16_t* data)
 {
 	uint8_t timeout = 0;
-  // обнуляем переменные
-  memset((uint8_t*)&ib_ptr->tx_frame, 0x00, sizeof(typeModBusFrameStruct));
-  // формирование запроса
-  if (f_code == MB_F_CODE_IDLE){
-    ib_ptr->transaction_type = MB_TRANSACTION_IDLE;
-  }
+  	// обнуляем переменные
+	memset((uint8_t*)&ib_ptr->tx_frame, 0x00, sizeof(typeModBusFrameStruct));
+  	// формирование запроса
+	if (f_code == MB_F_CODE_IDLE){
+		ib_ptr->transaction_type = MB_TRANSACTION_IDLE;
+	}
 	else if (ib_ptr->global_dbg_flag == 0){
 		memset((uint8_t*)&ib_ptr->rx_frame, 0x00, sizeof(typeModBusFrameStruct));
 		ib_ptr->tx_frame.type = MB_FRAME_TYPE_TX;
@@ -118,8 +118,11 @@ int8_t ib_run_transaction(typeIBStruct* ib_ptr, uint8_t dev_id, uint8_t f_code, 
 		mb_frame_form_packet(&ib_ptr->tx_frame, ib_ptr->tx_data, &ib_ptr->tx_len);
 		ib_ptr->uart.send_packet(ib_ptr->tx_data, ib_ptr->tx_len);
 	}
-  // ожидание ответа
-  if ((ib_ptr->transaction_type == MB_TRANSACTION_WRITE) || (ib_ptr->transaction_type == MB_TRANSACTION_READ)){
+	else{
+		//
+	}
+	// ожидание ответа
+	if ((ib_ptr->transaction_type == MB_TRANSACTION_WRITE) || (ib_ptr->transaction_type == MB_TRANSACTION_READ)){
 		while((timeout <= IB_UART_TIMEOUT_MS) || (ib_ptr->uart.packet_in_waiting())){
 			timeout += 1;
 			Timer_Delay(1, 1); 
@@ -132,48 +135,48 @@ int8_t ib_run_transaction(typeIBStruct* ib_ptr, uint8_t dev_id, uint8_t f_code, 
 			ib_ptr->nans_status |= (1<<dev_id);
 			ib_ptr->nans_counter += 1;
 		}
-  }
-  else if(ib_ptr->transaction_type == MB_TRANSACTION_IDLE){  // обработка пакетов 
+	}
+  	else if(ib_ptr->transaction_type == MB_TRANSACTION_IDLE){  // обработка пакетов 
 		// командный интерфейс для принятия команды по ВШ
-  }
-  else if(ib_ptr->transaction_type == MB_TRANSACTION_WRITE_BROAD){
-    return 1;
-  }
-  if (ib_ptr->uart.get_packet(ib_ptr->rx_data, &ib_ptr->rx_len)) {
+	}
+	else if(ib_ptr->transaction_type == MB_TRANSACTION_WRITE_BROAD){
+		return 1;
+	}
+	if (ib_ptr->uart.get_packet(ib_ptr->rx_data, &ib_ptr->rx_len)) {
 		//
 		memset((uint8_t*)&ib_ptr->rx_frame, 0x00, sizeof(typeModBusFrameStruct));
 		//
-    switch(__ib_parsing_rx_data(ib_ptr, ib_ptr->rx_data, ib_ptr->rx_len, ib_ptr->transaction_type)){
-      case(MB_UART_RX_STATUS_OK):
-        return 1;
-      case(MB_UART_RX_STATUS_LENGTH):
-        ib_ptr->nans_status |= (1<<dev_id);
-        ib_ptr->nans_counter += 1;
-        return -1;
-      case(MB_UART_CRC_ERROR):
-      case(MB_UART_UNEXPECTED_FRAME):
-      case(MB_UART_RX_STATUS_EXCEPTION):
-        ib_ptr->error_status |= (1<<dev_id);
-        ib_ptr->error_counter += 1;
-        return -1;
-      default:
-      return -1;
-    }
-  }
-  return 0;
+		switch(__ib_parsing_rx_data(ib_ptr, ib_ptr->rx_data, ib_ptr->rx_len, ib_ptr->transaction_type)){
+			case(MB_UART_RX_STATUS_OK):
+				return 1;
+			case(MB_UART_RX_STATUS_LENGTH):
+				ib_ptr->nans_status |= (1<<dev_id);
+				ib_ptr->nans_counter += 1;
+				return -1;
+			case(MB_UART_CRC_ERROR):
+			case(MB_UART_UNEXPECTED_FRAME):
+			case(MB_UART_RX_STATUS_EXCEPTION):
+				ib_ptr->error_status |= (1<<dev_id);
+				ib_ptr->error_counter += 1;
+				return -1;
+			default:
+				return -1;
+		}
+	}
+	return 0;
 }
 
 /**
   * @brief  запрос данных из ответа
 	* @param  ib_ptr указатель на структуру управления
-  * @param  buff указатель на массив для складывания данных ответа
+	* @param  buff указатель на массив для складывания данных ответа
 	* @param  len количество данных для копирования
-  * @retval  количество данных, принятых в прошлой транзакции
+	* @retval  количество данных, принятых в прошлой транзакции
   */
 uint8_t ib_get_answer_data(typeIBStruct* ib_ptr, uint8_t* buff, uint8_t len)
 {
-  memcpy(buff, (uint8_t*)ib_ptr->rx_frame.data, ib_ptr->rx_frame.byte_cnt);
-  return ib_ptr->rx_frame.byte_cnt;
+	memcpy(buff, (uint8_t*)ib_ptr->rx_frame.data, ib_ptr->rx_frame.byte_cnt);
+	return ib_ptr->rx_frame.byte_cnt;
 }
 
 /**

@@ -9,8 +9,8 @@
 
 
 #include "main.h"
+#include "pwr_channel.h"
 
-#define PWR_PULSE_TIME_MS 20  //! длительность импульса включения/отключения для типа канала 2
 #define PWR_ON_DELAY 250      //! задержка на включение каждого следующего устройства при включении питания
 
 /**
@@ -26,20 +26,29 @@ typedef enum PWR_CH
   * @brief  распределение каналов в соответствии с enum PWR_CH
   * @note   длина совпадает с PWR_CH_NUMBER
   */
-#define PWR_ADC_CH_NUM {1}
-#define PWR_CAL_RES_SHUNT_OHM {0.5}
-#define PWR_CAL_FB_SHUNT_OHM {51E3}
+#define PWR_ADC_CH_NUM          {1}
+#define PWR_CAL_ADC_TO_V_A      {8.06E-4}
+#define PWR_CAL_ADC_TO_V_B      {0.00E+0}
+#define PWR_CAL_RES_SHUNT_OHM   {0.015}
+#define PWR_CAL_FB_SHUNT_OHM    {100E3}
 
-#define PWR_CURRENT_BOUND {3*150}
 
+#define PWR_CURRENT_BOUND {3*650}
+
+//
 #define PWR_GPIO_PORT_ON {NULL}
 #define PWR_GPIO_NUM_ON {NULL}
 
 #define PWR_GPIO_PORT_OFF {NULL}
 #define PWR_GPIO_NUM_OFF {NULL}
 
-#define PWR_CHANNELS_TYPES {NU}
-#define PWR_AUTO_CTRL {0} //указываем те каналы, которые мы может отключать или включать автоматически
+#define PWR_CHANNELS_TYPES  {PWR_CH_FLAG}
+
+#define PWR_CHANNEL_CTRL_IB_NUM   {-1}
+#define PWR_CHANNEL_ADC_IB_NUM    {0}
+
+#define PWR_AUTO_CTRL       {0}  // указываем те каналы, которые мы может отключать или включать автоматически
+#define PWR_DOUBLE_OUT      {0}  // указываем те каналы, которые имеют дублированный выход для полукомплектов с холодным резервированием
 
 
 #endif

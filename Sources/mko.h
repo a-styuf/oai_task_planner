@@ -26,6 +26,7 @@ typedef enum MKO_ADDR
 	ADDR0, ADDR1, ADDR2, ADDR3, ADDR4, ADDR5, PARITY,
 	ADDR_CH_NUMBER
 } typeMKOADDR;
+
 #define MKO_ADDR_GPIO_PORT {PORTB, PORTB, PORTB, PORTB, PORTB, PORTB}
 #define MKO_ADDR_GPIO_LINE {12, 13, 14, 15, 16, 17}
 
@@ -61,14 +62,14 @@ typedef union
 }typeAnswerWord;
 
 /** 
-  * @brief  структура с данными для натягивание на регистры DATA для прямого доступак к подадресам
+  * @brief  структура с данными для натягивание на регистры DATA для прямого доступа к подадресам
   */
 typedef struct
 {
     uint32_t sa[32][32];
 }typeDataMap;
 
-typedef struct  //  max 62 - параетры ЦМ для сохоранения
+typedef struct  //  max 62 - параметры ЦМ для сохранения
 {
 	MIL1553Control *regs;
 	uint8_t type;
@@ -77,16 +78,17 @@ typedef struct  //  max 62 - параетры ЦМ для сохоранения
 	type_SINGLE_GPIO gpio[ADDR_CH_NUMBER];
 	uint8_t addr;
 	//
-	typeCommandWord cw; //+0
-	typeAnswerWord aw; //+2
-  uint16_t data[32]; //+13
+	typeCommandWord cw;
+	typeAnswerWord aw;
+	uint16_t data[32];
 	//
-	uint16_t msg; //+8
-	uint8_t num; //+10
-	uint8_t rcv_a;  //+10
-	uint8_t rcv_b;  //+10
-	uint8_t error; //+11
-	uint8_t error_cnt; //+12
+	uint16_t msg;
+	uint8_t num;
+	uint8_t rcv_a;
+	uint8_t rcv_b;
+	uint8_t valmess;
+	uint8_t error;
+	uint8_t error_cnt;
 	typeDataMap *data_map;
 	//
 	int need_to_process_flag;
@@ -105,6 +107,7 @@ void mko_rt_read_from_subaddr(typeMKOStruct *mko_ptr, uint8_t subaddr, uint16_t*
 //Работа в режиме КШ (BC)
 void mko_bc_transaction_handler(typeMKOStruct *mko_ptr);
 void mko_bc_transaction_start(typeMKOStruct *mko_ptr, uint8_t mode, uint8_t addr, uint8_t subaddr, uint8_t bus, uint16_t* data, uint8_t leng);
+void mko_bc_transaction_start_by_cw(typeMKOStruct *mko_ptr, uint16_t cw_var, uint8_t bus, uint16_t* data);
 //
 void mko_block_transmitter(typeMKOStruct *mko_ptr);
 void mko_get_error(typeMKOStruct *mko_ptr, uint8_t* error, uint8_t* error_cnt);

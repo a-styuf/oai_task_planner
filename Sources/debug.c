@@ -26,3 +26,42 @@ void dbg_gpio(uint8_t state)
 		}
 #endif
 }
+
+void dbg_gpio_pulse(void)
+{
+  dbg_gpio(DBG_GPIO_OFF);
+  dbg_gpio(DBG_GPIO_ON);
+  dbg_gpio(DBG_GPIO_OFF);
+}
+
+/**
+  * @brief  вывод на экран строки
+  * @param  str: 0-терминатед строка для вывода в отладочный UART
+  */
+void dbg_print(char *buff)
+{
+#ifdef DEBUG
+  if (strlen(buff) >= 127){
+    buff[127] = 0;
+  }
+  //UART1_SendPacket((uint8_t*)buff, strlen(buff));
+#endif
+}
+
+struct __FILE {
+  int handle;
+};
+FILE __stdout;
+
+int fputc(int ch, FILE *f) {
+  #ifdef DEBUG
+    //UART1_SendPacket((uint8_t *)&ch, 1);
+    return ch;
+  #else 
+		return ch;
+  #endif
+}
+
+int ferror(FILE *f) {
+  return 0;
+}

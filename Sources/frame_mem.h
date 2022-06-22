@@ -7,8 +7,8 @@
 #include "spi_fram.h"
 #include "timers.h"
 
-
-#define FR_MEM_TYPE_WR_TO_RD 0
+#define FR_MEM_TYPE_WR_TO_RD_WITH_PROT_AREA 0  //! режим работы, при котором указатель чтения инкременируется, указатель записи инкременируется, но при достижении (указателя чтения - FR_MEM_PROTECTED_AREA_FRAME_NUM) останавливается запись
+#define FR_MEM_TYPE_WR_TO_RD_WITH_PROT_POINT 1  //! режим работы, при котором указатель чтения инкременируется, указатель записи инкременируется, но при достижении (Защищенной точки - FR_MEM_PROTECTED_AREA_FRAME_NUM) останавливается запись. Защищенная точка устанавливается вручную.
 
 #define FRAM_USED_CHIP_NUMBER 1
 
@@ -25,7 +25,8 @@
 typedef struct {
   type_FRAM fram;
   uint8_t mode;  //todo: заготовка под управление типом чтения через указатель чтения
-  uint32_t write_ptr, read_ptr;
+  uint32_t write_ptr, read_ptr, protected_point_ptr;
+  uint8_t protected_point_ena; //включение защиты по принципу защищенной точки
   uint32_t check_result, check_time, format_time;
 }typeFRAME_MEM;
 
@@ -42,7 +43,9 @@ uint32_t __fr_mem_calc_prot_area_ptr(typeFRAME_MEM* mem_ptr);
 int8_t fr_mem_incr_rd_ptr(typeFRAME_MEM* mem_ptr);
 int8_t fr_mem_set_wr_ptr(typeFRAME_MEM* mem_ptr, uint32_t ptr_val);
 int8_t fr_mem_set_rd_ptr(typeFRAME_MEM* mem_ptr, uint32_t ptr_val);
-void fr_mem_set_rd_ptr_to_defence_area(typeFRAME_MEM* mem_ptr);
+void fr_mem_set_protected_point(typeFRAME_MEM* mem_ptr);
+void fr_mem_release_protected_point(typeFRAME_MEM* mem_ptr);
+void fr_mem_set_rd_ptr_to_defense_area(typeFRAME_MEM* mem_ptr);
 uint32_t fr_mem_check(typeFRAME_MEM* mem_ptr);
 void fr_mem_format(typeFRAME_MEM* mem_ptr);
 void fr_mem_param_save(typeFRAME_MEM* mem_ptr, uint8_t* frame);

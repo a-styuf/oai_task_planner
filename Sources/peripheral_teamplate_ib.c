@@ -1,7 +1,7 @@
 /**
  * @file perepherial_teamplate.c
  * @author a-styuf (a-styuf@yandex.ru)
- * @brief          : пример работы с переферией через внутреннюю шину
+ * @brief          : пример работы с периферией через внутреннюю шину
 	* @note				- модуль обращается к внутренней шине один раз в измерительный интервал
 	* @note				- создает кадр-шаблон для архивной памяти
  * @version 0.1
@@ -200,7 +200,7 @@ void __per_tmplt_struct_rev(typePERTMPLTMeas* per_tmplt_struct_ptr)
 }
 
 /**
-  * @brief  инициализация циклограмм опроса переферии
+  * @brief  инициализация циклограмм опроса периферии
 	* @param  per_tmplt_ptr указатель на структуру управления
   */
 void per_tmplt_meas_cycl_init(typePERTMPLTStruct* per_tmplt_ptr)

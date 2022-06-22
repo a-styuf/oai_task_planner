@@ -13,6 +13,14 @@
 #define _MAIN_H_
 
 #include "1986ve8_lib/cm4ikmcu.h"
+#include "debug.h"
 
+#define DEBUG
+
+#ifdef __INT64_TYPE__
+	typedef unsigned long uint64_t;
+	typedef long int64_t;
+	typedef unsigned int uint32_t;
 #endif
 
+#endif

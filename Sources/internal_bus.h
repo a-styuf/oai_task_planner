@@ -28,11 +28,11 @@
 #define MB_F_CODE_111										0x6F  // не в стандарте ModBus
 #define MB_F_CODE_ERROR									0x80
 
-#define MB_FRAME_TYPE_RX 0x01
-#define MB_FRAME_TYPE_TX 0x02
-#define MB_FRAME_TYPE_ERROR 0x03
+#define MB_FRAME_TYPE_RX      0x01
+#define MB_FRAME_TYPE_TX      0x02
+#define MB_FRAME_TYPE_ERROR   0x03
 
-#define MB_CRC16_INIT_VAL 0xFFFF
+#define MB_CRC16_INIT_VAL     0xFFFF
 
 #define MB_UART_RX_STATUS_OK							1
 #define MB_UART_RX_STATUS_EXCEPTION				0
@@ -49,7 +49,7 @@
 #pragma pack(push, 2)
 
 /** 
-  * @brief  структура-интерфейс к UART-переферии
+  * @brief  структура-интерфейс к UART-периферии
   * @param  init  функция инициализации UART устройства
   * @param  send_packet  функция отправки пакета, en_crc: 1 - подсчет и добавление crc16-ModBus, 0-ничего
   * @param  get_packet  функция приема пакета, возвращает 0 - нет пакета, 1 - есть пакет с правильным crc16, -1 - прием пакета с некорректным crc16
