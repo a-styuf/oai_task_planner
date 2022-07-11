@@ -54,8 +54,8 @@ void WDT_Reset(void)
   // CLK_CNTR->KEY = _KEY_;
   // CLK_CNTR->PER0_CLK |= (1<<6);
   //
-  WDT->KEY = 0xAAAA;
   WDT->KEY = 0x5555;
+  WDT->KEY = 0xAAAA;
   //
   // CLK_CNTR->PER0_CLK &= ~(1<<6);
 }

@@ -6,8 +6,8 @@
 
 #pragma pack(push, 2)
 
-#define FRAME_DEFINER_BASE_HUGE_SYSTEMS   0
-#define FRAME_DEFINER_BASE_SMALL_SERIES    1
+#define FRAME_DEFINER_BASE_HUGE_SYSTEMS     0
+#define FRAME_DEFINER_BASE_SMALL_SERIES     1
 
 /**
   * @brief  структура шаблона кадра кадра

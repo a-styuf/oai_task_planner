@@ -110,7 +110,7 @@ int8_t bdd_frame_forming(typeBDDStruct* bdd_ptr)
 		if (bdd_ptr->rec_num >= BDD_MEAS_NUMBER){
 			bdd_ptr->frame.row.label = 0x0FF1;
 			bdd_ptr->frame.row.definer = frame_definer(0, bdd_ptr->device_number, NULL, bdd_ptr->frame_type);
-			bdd_ptr->frame.row.num = (*bdd_ptr->global_frame_num_ptr++)&0xFFFF;
+			bdd_ptr->frame.row.num = ((*bdd_ptr->global_frame_num_ptr)++)&0xFFFF;
 			bdd_ptr->frame.row.time = Get_Time_s();
 			//
 			for (i=0; i<BDD_MEAS_NUMBER; i++){

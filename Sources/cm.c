@@ -81,7 +81,6 @@ void cm_reset_parameters(typeCMModel* cm_ptr)
 	cm_ptr->ctrl.operation_time = cm_ptr->ctrl.operation_time;
 	//
 	cm_ptr->sw_version = 0x0000;
-
 	// инициализация структуры управления кадрами
 	cm_ptr->frames_fifo_num = 0x00;
 	cm_ptr->frames_fifo_num_max = 0x00;
@@ -486,8 +485,8 @@ void cm_frame_forming(typeCMModel* cm_ptr)
 	//
 	cm_ptr->frame.sys.body.sw_version = cm_ptr->sw_version;
 	//
-	cm_ptr->frame.sys.body.nans_status = cm_ptr->ib.nans_status;
-	cm_ptr->frame.sys.body.nans_counter = cm_ptr->ib.nans_counter;
+	cm_ptr->frame.sys.body.nans_status = cm_ptr->ib.nans_status + (((cm_ptr->mko_bc.error) ? 1 : 0) << 13);
+	cm_ptr->frame.sys.body.nans_counter = cm_ptr->ib.nans_counter + cm_ptr->mko_bc.error_cnt;
 	cm_ptr->frame.sys.body.cm_status = cm_ptr->ctrl.status;
 	cm_ptr->frame.sys.body.rst_cnter = cm_ptr->ctrl.rst_cnter & 0xFF;
 	//
@@ -536,7 +535,7 @@ void cm_mko_cmd_synch_time(typeCMModel* cm_ptr)
 {
 	cm_ptr->ctrl.sync_num += 1;
 	cm_ptr->ctrl.sync_time_s = Get_Time_s();
-		Time_Set((uint64_t)(((uint64_t)(cm_ptr->mko_rt.data[1] & 0xFFFF) << 32) | ((uint64_t)(cm_ptr->mko_rt.data[2] & 0xFFFF) << 16)), &cm_ptr->ctrl.diff_time, &cm_ptr->ctrl.diff_time_fractional);
+	Time_Set((uint64_t)(((uint64_t)(cm_ptr->mko_rt.data[1] & 0xFFFF) << 32) | ((uint64_t)(cm_ptr->mko_rt.data[2] & 0xFFFF) << 16)), &cm_ptr->ctrl.diff_time, &cm_ptr->ctrl.diff_time_fractional);
 }
 
 /**

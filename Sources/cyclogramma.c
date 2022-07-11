@@ -95,18 +95,21 @@ uint8_t cyclo_handler(typeCyclogramma* cyclo_ptr, uint32_t time_ms)
   * @brief  запуск циклограммы или возвращение из паузы
 	* @param  cyclo_ptr указатель на структуру управления
 	* @param  cyclo_ptr указатель на структуру управления
+	* @retval 0 - цикл уже запущен, 1 - цикл запустился, -1 - ошибка
   */
-void cyclo_start(typeCyclogramma* cyclo_ptr)
+int8_t cyclo_start(typeCyclogramma* cyclo_ptr)
 {
 	switch(cyclo_ptr->mode){
 		case (CYCLO_MODE_OFF):
 			cyclo_ptr->mode = CYCLO_MODE_READY;
 			cyclo_ptr->current_step = 0;
-			break;
+			return 1;
 		case (CYCLO_MODE_PAUSE):
 			cyclo_ptr->mode = CYCLO_MODE_WORK;
 			cyclo_ptr->last_step_time += cyclo_ptr->pause_time;
-			break;
+			return 0;
+		default:
+			return -1;
 	}
 }
 

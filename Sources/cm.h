@@ -1,9 +1,9 @@
 #ifndef _CM_H_
 #define _CM_H_
 
+#include "main.h"
 #include <stdio.h>
 #include <string.h>
-#include "main.h"
 #include "power_management.h"
 #include "internal_bus.h"
 #include "timers.h"
@@ -12,7 +12,6 @@
 #include "task_planner.h"
 #include "mko.h"
 #include "stm.h"
-
 
 #define CM_HANDLER_INTERVAL_MS   500
 
@@ -272,6 +271,5 @@ uint8_t uint16_to_log2_uint8_t(uint16_t var);
 uint16_t get_val_from_bound(uint16_t val, uint16_t min, uint16_t max); //если число внутри границ - используется оно, если нет, то ближайшая граница
 uint16_t check_val_in_bound(uint16_t val, uint16_t min, uint16_t max);
 uint16_t get_version_from_str(char* var_str);
-
 
 #endif

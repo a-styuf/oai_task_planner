@@ -104,7 +104,7 @@ int8_t dep_frame_forming(typeDEPStruct* dep_ptr)
 		if (dep_ptr->rec_num >= 6){
 			dep_ptr->frame.row.label = 0x0FF1;
 			dep_ptr->frame.row.definer = frame_definer(0, dep_ptr->device_number, NULL, dep_ptr->frame_type);
-			dep_ptr->frame.row.num = (*dep_ptr->global_frame_num_ptr++)&0xFFFF;
+			dep_ptr->frame.row.num = ((*dep_ptr->global_frame_num_ptr)++)&0xFFFF;
 			dep_ptr->frame.row.time = Get_Time_s();
 			//
 			for (i=0; i<6; i++){

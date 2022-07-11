@@ -104,7 +104,7 @@ int8_t dir_frame_forming(typeDIRStruct* dir_ptr)
 		if (dir_ptr->rec_num >= 2){
 			dir_ptr->frame.row.label = 0x0FF1;
 			dir_ptr->frame.row.definer = frame_definer(0, dir_ptr->device_number, NULL, dir_ptr->frame_type);
-			dir_ptr->frame.row.num = (*dir_ptr->global_frame_num_ptr++)&0xFFFF;
+			dir_ptr->frame.row.num = ((*dir_ptr->global_frame_num_ptr)++)&0xFFFF;
 			dir_ptr->frame.row.time = Get_Time_s();
 			//
 			for (i=0; i<2; i++){

@@ -109,7 +109,7 @@ int8_t ddii_frame_forming(typeDDIIStruct* ddii_ptr)
 		if (ddii_ptr->rec_num >= DDII_MEAS_NUMBER){
 			ddii_ptr->frame.row.label = 0x0FF1;
 			ddii_ptr->frame.row.definer = frame_definer(0, ddii_ptr->device_number, NULL, ddii_ptr->frame_type);
-			ddii_ptr->frame.row.num = (*ddii_ptr->global_frame_num_ptr++)&0xFFFF;
+			ddii_ptr->frame.row.num = ((*ddii_ptr->global_frame_num_ptr)++)&0xFFFF;
 			ddii_ptr->frame.row.time = Get_Time_s();
 			//
 			for (i=0; i<DDII_MEAS_NUMBER; i++){

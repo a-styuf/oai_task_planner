@@ -105,7 +105,7 @@ void INT_TMR3_Handler(void)
         pwm_adder_cnter[i] += 1;
         pwm_adder_cnter[i]&= 0x01F;
         if (pwm_adder_cnter[i] == pwm_adder[i]) *TMR_CCR[i] = CCR1_base[i];
-        else if (pwm_adder_cnter == 0) *TMR_CCR[i] = CCR1_base[i] + 1;
+        else if (pwm_adder_cnter[i] == 0) *TMR_CCR[i] = CCR1_base[i] + 1;
     }
 }
 
@@ -277,5 +277,3 @@ void Timer_PWM_Set_Fp(uint8_t ch_num, float pwm_val_fp)
     }
     NVIC_EnableIRQ(IRQn_TMR3);
 }
-
-

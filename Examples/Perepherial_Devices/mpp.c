@@ -115,7 +115,7 @@ int8_t mpp_frame_forming(typeMPPStruct* mpp_ptr)
 	if(mpp_ptr->rec_ptr >= 2){
 		mpp_ptr->frame.row.label = 0x0FF1;
 		mpp_ptr->frame.row.definer = frame_definer(0, mpp_ptr->device_number, NULL, mpp_ptr->frame_type);
-		mpp_ptr->frame.row.num = (*mpp_ptr->global_frame_num_ptr++)&0xFFFF;
+		mpp_ptr->frame.row.num = ((*mpp_ptr->global_frame_num_ptr)++)&0xFFFF;
 		mpp_ptr->frame.row.time = Get_Time_s();
 		mpp_ptr->rec_ptr -= 1;
 		mpp_ptr->frame.mpp.rec[0] = mpp_ptr->rec_buff[mpp_ptr->rec_ptr];

@@ -47,7 +47,7 @@ typedef  struct
 void cyclo_init(typeCyclogramma* cyclo_ptr);
 int8_t cyclo_add_step(typeCyclogramma* cyclo_ptr, void (*func) (void*), void* ctrl_struct, uint32_t delay_ms);
 uint8_t cyclo_handler(typeCyclogramma* cyclo_ptr, uint32_t time_ms);
-void cyclo_start(typeCyclogramma* cyclo_ptr);
+int8_t cyclo_start(typeCyclogramma* cyclo_ptr);
 void cyclo_stop(typeCyclogramma* cyclo_ptr);
 void cyclo_pause(typeCyclogramma* cyclo_ptr);
 void cyclo_do_nothing(void* ctrl_struct);

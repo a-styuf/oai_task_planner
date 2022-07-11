@@ -69,6 +69,8 @@ int main() {
 	//
 	while(1) {
 		tp_handler(&tp); // обработка планировщика задач
+		//
+		WDRST;
 	}
 }
 
@@ -267,7 +269,7 @@ void cm_dbg_ib_command_handler(typeCMModel* cm_ptr)
 	}
 }
 
-// Обработка callback-функций от перываний
+// Обработка callback-функций от прерываний
 
 /**
   * @brief  обработчик прерывания АЦП

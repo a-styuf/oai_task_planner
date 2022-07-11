@@ -108,7 +108,7 @@ int8_t per_tmplt_frame_forming(typePERTMPLTStruct* per_tmplt_ptr)
 	if(per_tmplt_ptr->meas_ptr >= 2){
 		per_tmplt_ptr->frame.row.label = 0x0FF1;
 		per_tmplt_ptr->frame.row.definer = frame_definer(0, per_tmplt_ptr->device_number, NULL, per_tmplt_ptr->frame_type);
-		per_tmplt_ptr->frame.row.num = (*per_tmplt_ptr->global_frame_num_ptr++)&0xFFFF;
+		per_tmplt_ptr->frame.row.num = ((*per_tmplt_ptr->global_frame_num_ptr)++)&0xFFFF;
 		per_tmplt_ptr->frame.row.time = Get_Time_s();
 		//
 		memset((uint8_t*)&per_tmplt_ptr->frame.row.data[0], 0xFE, sizeof(per_tmplt_ptr->frame.row.data));
