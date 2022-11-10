@@ -19,7 +19,7 @@
 
 /** 
   * @brief  структура с отдельным шагом циклограммы
-  * @param func фунция обработчик шага циклограммы
+  * @param func функция обработчик шага циклограммы
 */
 typedef  struct
 {
@@ -33,6 +33,7 @@ typedef  struct
   */
 typedef  struct
 {
+  char name[16];
   typeCyclogrammaStep step[CYCLO_MAX_STEP];
   uint32_t step_number;
   uint8_t mode;
@@ -44,7 +45,7 @@ typedef  struct
 
 #pragma pack(pop)
 //
-void cyclo_init(typeCyclogramma* cyclo_ptr);
+void cyclo_init(typeCyclogramma* cyclo_ptr, char* name);
 int8_t cyclo_add_step(typeCyclogramma* cyclo_ptr, void (*func) (void*), void* ctrl_struct, uint32_t delay_ms);
 uint8_t cyclo_handler(typeCyclogramma* cyclo_ptr, uint32_t time_ms);
 int8_t cyclo_start(typeCyclogramma* cyclo_ptr);

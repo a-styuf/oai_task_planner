@@ -33,8 +33,8 @@ void cm_init(typeCMModel* cm_ptr, uint8_t self_num, uint8_t id, uint8_t mko_addr
 	cm_ptr->id = id;
 	cm_ptr->self_num = self_num;
 	cm_ptr->half_set_num = gpio_get(&cm_ptr->half_set_num_io);
-	cm_set_clear_status(cm_ptr, CM_STATUS_CFG_HALF_SET, cm_ptr->half_set_num);
-	stm_single_ch_const_set(&cm_ptr->stm, NKBE, cm_ptr->half_set_num);
+	cm_set_clear_status(cm_ptr, CM_STATUS_CFG_HALF_SET, cm_ptr->half_set_num & 0x01);
+	stm_single_ch_const_set(&cm_ptr->stm, NKBE, ((cm_ptr->half_set_num + 1) & 0x01));
 	cm_ptr->device_number = device_number;
 	cm_ptr->sw_version = get_version_from_str(ver_str);
 	cm_ptr->frame_type = frame_type;
@@ -87,6 +87,7 @@ void cm_reset_parameters(typeCMModel* cm_ptr)
 	cm_ptr->fifo_error_cnt = 0x00;
 	memset((uint8_t*)cm_ptr->frames_fifo, 0x00, sizeof(cm_ptr->frames_fifo));
 	cm_ptr->global_frame_num = 0x00;
+	cm_ptr->const_mode = 0;
 	//
 	cm_ptr->id = 0;
 	cm_ptr->self_num = 0;
@@ -142,7 +143,6 @@ void cm_set_cfg(typeCMModel* cm_ptr)
 	//
 	fr_mem_set_rd_ptr(&cm_ptr->mem, cm_ptr->loaded_cfg.cfg.body.read_ptr);
 	fr_mem_set_wr_ptr(&cm_ptr->mem, cm_ptr->loaded_cfg.cfg.body.write_ptr);
-	
 }
 
 /**
@@ -431,7 +431,7 @@ void cm_set_interval_value(typeCMModel* cm_ptr, uint16_t interval_number, uint16
 {
 	switch(interval_number){
 		case(CM_INTERV_SYS):
-			cm_ptr->ctrl.intervals[CM_INTERV_SYS] = get_val_from_bound(interval_value_s, 10, 7200);
+			cm_ptr->ctrl.intervals[CM_INTERV_SYS] = get_val_from_bound(interval_value_s, 1, 7200);
 			break;
 		case(CM_INTERV_MEAS):
 			cm_ptr->ctrl.intervals[CM_INTERV_MEAS] = get_val_from_bound(interval_value_s, 10, 7200);
@@ -458,7 +458,7 @@ void cm_set_interval_value(typeCMModel* cm_ptr, uint16_t interval_number, uint16
 void cm_set_speedy_mode(typeCMModel* cm_ptr, uint16_t speedy_mask, uint16_t time_s)
 {
 	cm_ptr->ctrl.speedy_mode_state = speedy_mask & CM_DEVICE_SPEEDY_MODE_MASK;
-cm_ptr->ctrl.speedy_mode_timeout = get_val_from_bound(time_s, 1, 3600)*1000000; //приведение к мкс
+	cm_ptr->ctrl.speedy_mode_timeout = get_val_from_bound(time_s, 1, 3600)*1000000; //приведение к мкс
 }
 
 // Раобота с системным кадром
@@ -536,6 +536,22 @@ void cm_mko_cmd_synch_time(typeCMModel* cm_ptr)
 	cm_ptr->ctrl.sync_num += 1;
 	cm_ptr->ctrl.sync_time_s = Get_Time_s();
 	Time_Set((uint64_t)(((uint64_t)(cm_ptr->mko_rt.data[1] & 0xFFFF) << 32) | ((uint64_t)(cm_ptr->mko_rt.data[2] & 0xFFFF) << 16)), &cm_ptr->ctrl.diff_time, &cm_ptr->ctrl.diff_time_fractional);
+}
+
+/**
+  * @brief  включение режима констант для проверки работы отправки данных
+	* @param  cm_ptr указатель на структуру управления
+	* @param  mode 1 - ena, 0 - disable 
+  */
+void cm_constant_mode_ena(typeCMModel* cm_ptr, uint8_t mode)
+{
+	if (mode) {
+		cm_ptr->const_mode = 1;
+	}
+	else {
+		cm_ptr->const_mode = 0;
+	}
+	// printf("const mode is <%d>", cm_ptr->const_mode);
 }
 
 /**

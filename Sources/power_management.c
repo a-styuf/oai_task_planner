@@ -150,7 +150,7 @@ void pwr_set_state(typePower* pwr_ptr, uint32_t state)
   */
 void pwr_set_bound(typePower* pwr_ptr, uint8_t num, uint16_t bound)
 {
-	pwr_ptr->ch[num].current_bound = bound;
+	pwr_ptr->ch[num].current_bound = (float)bound;
 }
 
 void pwr_apply_adc_data(typePower* pwr_ptr, uint16_t* adc_data)

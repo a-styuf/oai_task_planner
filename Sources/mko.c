@@ -333,7 +333,7 @@ uint8_t mko_get_addr_from_gpio(typeMKOStruct *mko_ptr)
       return 0;
     }
   }
-    else{
+  else{
     return 0;
   }
 }

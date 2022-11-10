@@ -47,14 +47,14 @@ void UART0_Init() {
 
 void UART0_SendPacket(uint8_t *buff, uint8_t leng) {
   uint8_t i;
-  MDR_UART0->CR &= ~(1<<9);  //çàïðåò ïðèåìà
+  MDR_UART0->CR &= ~(1<<9);
   for(i=0; i<leng; i++) {
     while((MDR_UART0->FR & (1<<7))==0);
     MDR_UART0->DR = buff[i];
     WDRST;
     }
   while(MDR_UART0->FR & (1<<3));  //wait for Busy
-  MDR_UART0->CR |= (1<<9);  //âíîâü ðàçðåøåíèå ïðèåìà
+  MDR_UART0->CR |= (1<<9);
 }
 
 int8_t UART0_PacketInWaiting(void)
@@ -92,9 +92,10 @@ int8_t UART0_GetPacket(uint8_t *buff, uint8_t *leng) {
   }
 }
 
-void INT_UART0_Handler(void) {
+void INT_UART0_Handler(void) 
+{
   uint8_t rxb;
-  if(MDR_UART0->RIS & (1<<4)) {  //ïðåðûâàíèå ïî Rx
+  if(MDR_UART0->RIS & (1<<4)) {
     rxb = MDR_UART0->DR;
     if(MDR_TMR0->STATUS & (1<<1)) {  //timeout
       Rx0BuffPtr = 0;
@@ -130,7 +131,7 @@ void UART1_Init(void)
  * @brief отправка данных через ядро UART, блокирующий
  * 
  * @param buff указатель на буфер для передачи данных
- * @param leng дляна данных для передачи (в байтах)
+ * @param leng длина данных для передачи (в байтах)
  */
 void UART1_SendPacket(uint8_t *buff, uint8_t leng) 
 {

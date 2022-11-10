@@ -13,8 +13,9 @@
 #include "internal_bus.h"
 
 /**
-  * @brief  инициализация структуры управления внутренней шины
+	* @brief  инициализация структуры управления внутренней шины
 	* @param  ib_ptr указатель на структуру управления
+	* @note   TODO: вынести привязку к железу из библиотеки
   */
 void ib_init(typeIBStruct* ib_ptr)
 {
@@ -37,7 +38,7 @@ int8_t ib_process_tp(void* ctrl_struct, uint64_t time_us, typeProcessInterfaceSt
 	typeIBStruct* ib_ptr = (typeIBStruct*)ctrl_struct;
 	if ((time_us - ib_ptr->last_call_time_us) > (IB_PROCESS_PERIOD*1000)) {
 		ib_ptr->last_call_time_us = time_us;
-    ib_run_transaction(ib_ptr, MB_DEV_ID_NU, MB_F_CODE_IDLE, NULL, NULL, NULL);
+		ib_run_transaction(ib_ptr, MB_DEV_ID_NU, MB_F_CODE_IDLE, NULL, NULL, NULL);
 		return 1;
 	}
 	else {

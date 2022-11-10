@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-#define IRQn_GPIO (IRQn_Type)GPIO_IRQn
+#define IRQn_GPIO (IRQn_Type)GPIO_IRQn  //TODO: вынести платформозависимость из модуля
 
 #define GPIO_ON 1
 #define GPIO_OFF 0

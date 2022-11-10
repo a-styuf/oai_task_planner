@@ -12,7 +12,7 @@
 #include "task_planner.h"
 
 /**
-  * @brief  инициализзация модуля работы с процессами
+  * @brief  инициализация модуля работы с процессами
 	* @param  tp_ptr указатель на структуру управления
   */
 void tp_init(typeTPStruct* tp_ptr)
@@ -74,7 +74,7 @@ int8_t tp_process_registration(typeTPStruct* tp_ptr, int8_t (*action) (void*, ui
   */
 void tp_handler(typeTPStruct* tp_ptr)
 {
-  uint32_t hanler_duration = 0, process_duration=0;
+  uint32_t handler_duration = 0, process_duration=0;
   volatile uint64_t handler_start_time = 0;
   //
   if ((tp_ptr->time.full_us - tp_ptr->last_call_time_us) >= TP_PROCESS_PERIOD_MS*1000){
@@ -82,34 +82,34 @@ void tp_handler(typeTPStruct* tp_ptr)
     tp_ptr->last_call_time_us = tp_ptr->time.full_us;
     // запуск обработки процесса
     handler_start_time = tp_ptr->time.full_us;
-    while(hanler_duration < (0.5*TP_PROCESS_PERIOD_MS*1000))
+    while(handler_duration < (0.5*TP_PROCESS_PERIOD_MS*1000))
     {
       //
-      dbg_gpio(DBG_GPIO_ON);
+      // dbg_gpio(DBG_GPIO_ON);
       //
       if (tp_task_run(tp_ptr, tp_ptr->active_process_num, &process_duration) == TP_PROCESS_ABSENT){
         tp_ptr->active_process_num = 0;
-        dbg_gpio(DBG_GPIO_OFF);
+        // dbg_gpio(DBG_GPIO_OFF);
         break;
       }
       else{
         tp_ptr->active_process_num += 1;
-        dbg_gpio(DBG_GPIO_OFF);
+        // dbg_gpio(DBG_GPIO_OFF);
       }
       //
-      hanler_duration = tp_ptr->time.full_us - handler_start_time;
+      handler_duration = tp_ptr->time.full_us - handler_start_time;
       //
-      if (hanler_duration > TP_PROCESS_WARNING_MS*1000){
+      if (handler_duration > TP_PROCESS_WARNING_MS*1000){
         tp_ptr->status |= TP_STATUS_WARNING;
       }
-      else if (hanler_duration > TP_PROCESS_ERROR_MS*1000){
+      else if (handler_duration > TP_PROCESS_ERROR_MS*1000){
         tp_ptr->error_counter++;
         tp_ptr->status |= TP_STATUS_ERROR;
       }
     }
     //
-    tp_ptr->work_time.full_us += hanler_duration;
-    tp_ptr->work_percantage = (100.*tp_ptr->work_time.full_us/tp_ptr->time.full_us);
+    tp_ptr->work_time.full_us += handler_duration;
+    tp_ptr->work_percentage = (100.*tp_ptr->work_time.full_us/tp_ptr->time.full_us);
     //
   }
 	// пересчет времени в удобный формат
@@ -140,14 +140,14 @@ int8_t tp_task_run(typeTPStruct* tp_ptr, uint8_t process_num, uint32_t* task_tim
     status = tp_ptr->process[tp_ptr->active_process_num].action(tp_ptr->process[tp_ptr->active_process_num].control_struct_ptr, tp_ptr->time.full_us, &tp_ptr->process[tp_ptr->active_process_num].interface);
     *task_time_ms = tp_ptr->time.full_us - task_start;
     tp_ptr->process[tp_ptr->active_process_num].process_time.full_us += *task_time_ms;
-    tp_ptr->process[tp_ptr->active_process_num].work_percantage = (100.*tp_ptr->process[tp_ptr->active_process_num].process_time.full_us/tp_ptr->time.full_us);
+    tp_ptr->process[tp_ptr->active_process_num].work_percentage = (100.*tp_ptr->process[tp_ptr->active_process_num].process_time.full_us/tp_ptr->time.full_us);
     __time_recalculate(&tp_ptr->process[tp_ptr->active_process_num].process_time);
     return status;
   }
 }
 
 /**
-  * @brief  обработка вызова в прерввании в 1мс таймере
+  * @brief  обработка вызова в прерывании в 1мс таймере
 	* @param  tp_ptr указатель на структуру управления
   */
 void tp_timer_handler(typeTPStruct* tp_ptr)

@@ -14,10 +14,12 @@
 /**
   * @brief  инициализация структуры управления циклограммой
 	* @param  cyclo_ptr указатель на структуру управления
+	* @param  name строка с именем циклограммы, для отладки, не более 16 символов (включая терминатор)
   */
-void cyclo_init(typeCyclogramma* cyclo_ptr)
+void cyclo_init(typeCyclogramma* cyclo_ptr, char* name)
 {
-  memset((uint8_t*)cyclo_ptr, 0x00, sizeof(typeCyclogramma));
+	memset((uint8_t*)cyclo_ptr, 0x00, sizeof(typeCyclogramma));
+	strcpy(cyclo_ptr->name, name);
 }
 
 /**
@@ -42,8 +44,8 @@ int8_t cyclo_add_step(typeCyclogramma* cyclo_ptr, void (*func) (void*), void* ct
 }
 
 /**
-  * @brief  обработка состояниция циклограммы
-	* @note  небходимо вызывать чаще, чем расстановленные задержки: времянное разрешение работы равно периоду вызова
+  * @brief  обработка состояния циклограммы
+	* @note  небходимо вызывать чаще, чем расстановленные задержки: временное разрешение работы равно периоду вызова
 	* @param  cyclo_ptr указатель на структуру управления
 	* @param  time_ms текущее время работы МК в мс
 	* @retval  количество добавленных шагов всего либо ошибка добавления (-1)
@@ -52,38 +54,38 @@ uint8_t cyclo_handler(typeCyclogramma* cyclo_ptr, uint32_t time_ms)
 {
 	uint32_t call_period = time_ms - cyclo_ptr->last_call_time_ms;
 	switch(cyclo_ptr->mode){
-	case (CYCLO_MODE_OFF):
-		//
-		break;
-	case (CYCLO_MODE_PAUSE):
-		cyclo_ptr->pause_time += call_period;
-		break;
-	case (CYCLO_MODE_READY):
-		cyclo_ptr->last_step_time = time_ms;
-		cyclo_ptr->mode = CYCLO_MODE_WORK;
-		break;
-	case (CYCLO_MODE_WORK):
-		// запускаем функцию-обработчик шага
-		if((cyclo_ptr->last_step_duration == 0) || (cyclo_ptr->current_step >= cyclo_ptr->step_number)){
-			if(cyclo_ptr->step[cyclo_ptr->current_step].func != 0) {
-				cyclo_ptr->step[cyclo_ptr->current_step].func(cyclo_ptr->step[cyclo_ptr->current_step].ctrl_struct);
-				cyclo_ptr->last_step_duration += 1;
+		case (CYCLO_MODE_OFF):
+			//
+			break;
+		case (CYCLO_MODE_PAUSE):
+			cyclo_ptr->pause_time += call_period;
+			break;
+		case (CYCLO_MODE_READY):
+			cyclo_ptr->last_step_time = time_ms;
+			cyclo_ptr->mode = CYCLO_MODE_WORK;
+			break;
+		case (CYCLO_MODE_WORK):
+			// запускаем функцию-обработчик шага
+			if((cyclo_ptr->last_step_duration == 0) || (cyclo_ptr->current_step >= cyclo_ptr->step_number)){
+				if(cyclo_ptr->step[cyclo_ptr->current_step].func != 0) {
+					cyclo_ptr->step[cyclo_ptr->current_step].func(cyclo_ptr->step[cyclo_ptr->current_step].ctrl_struct);
+					cyclo_ptr->last_step_duration += 1;
+				}
+				else{
+					cyclo_stop(cyclo_ptr);
+					break;
+				}
 			}
-			else{
-				cyclo_stop(cyclo_ptr);
-				break;
+			// обрабатываем задержки между шагами
+			if(cyclo_ptr->last_step_duration >= cyclo_ptr->step[cyclo_ptr->current_step].delay_to_next_step_ms) {
+				cyclo_ptr->current_step += 1;
+				cyclo_ptr->last_step_duration = 0;
 			}
-		}
-		// обрабатываем задержки между шагами
-		if(cyclo_ptr->last_step_duration >= cyclo_ptr->step[cyclo_ptr->current_step].delay_to_next_step_ms) {
-			cyclo_ptr->current_step += 1;
-			cyclo_ptr->last_step_duration = 0;
-		}
-		else {
-			cyclo_ptr->last_step_duration += (time_ms - cyclo_ptr->last_step_time);
-		}
-		cyclo_ptr->last_step_time = time_ms;
-		break;
+			else {
+				cyclo_ptr->last_step_duration += (time_ms - cyclo_ptr->last_step_time);
+			}
+			cyclo_ptr->last_step_time = time_ms;
+			break;
 	}
 	//
 	cyclo_ptr->last_call_time_ms = time_ms;

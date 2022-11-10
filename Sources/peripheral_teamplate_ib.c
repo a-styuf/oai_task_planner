@@ -206,7 +206,7 @@ void __per_tmplt_struct_rev(typePERTMPLTMeas* per_tmplt_struct_ptr)
 void per_tmplt_meas_cycl_init(typePERTMPLTStruct* per_tmplt_ptr)
 {
 	// инициализация циклограммы
-	cyclo_init(&per_tmplt_ptr->meas_cyclo);
+	cyclo_init(&per_tmplt_ptr->meas_cyclo, "ib_tmpt");
 	//
 	cyclo_add_step(&per_tmplt_ptr->meas_cyclo, CYCLO_DO_NOTHING, (void*)per_tmplt_ptr, 100);
 	cyclo_add_step(&per_tmplt_ptr->meas_cyclo, per_tmplt_meas_cycl_example_1, (void*)per_tmplt_ptr, 200);

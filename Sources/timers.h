@@ -10,7 +10,7 @@
 #define IRQn_TMR2 (IRQn_Type)95
 #define IRQn_TMR3 (IRQn_Type)96
 
-#pragma pack(1)
+#pragma pack(push, 1)
 
 /**
   * @brief  структура для удобства работы с временем в 1/256 секунд
@@ -22,6 +22,8 @@ typedef struct
     uint8_t high_part;
     uint16_t zero_part;
 }typeCMTime;
+
+#pragma pack(pop)
 
 void Timers_Init(void);
 void Timers_Start(uint8_t num, uint32_t time_ms);

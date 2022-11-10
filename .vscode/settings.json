@@ -29,7 +29,11 @@
     "bdd.h": "c",
     "string.h": "c",
     "gpio.h": "c",
-    "perepherial_teamplate.h": "c"
+    "perepherial_teamplate.h": "c",
+    "compare": "c"
   },
-  "C_Cpp.errorSquiggles": "Enabled"
+  "C_Cpp.errorSquiggles": "Enabled",
+  "cSpell.words": [
+    "подадресом"
+  ]
 }

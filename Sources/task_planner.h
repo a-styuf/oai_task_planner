@@ -1,7 +1,7 @@
 #ifndef _TASK_PLANNER_H_
 #define _TASK_PLANNER_H_
 
-#include "main.h"  //! в перспективе  избавиться от платформозависимости
+#include "main.h"  //! TODO: в перспективе  избавиться от платформозависимости
 #include "timers.h"
 #include "debug.h"
 
@@ -11,7 +11,7 @@
 
 #define TP_PROCESS_MAX_NUM    64  //! максимальное количество процессов для обработки 64
 #define TP_EVENT_MAX_NUM      32  //! максимальное количество event-ов для процесса (используется для передачи событий)
-#define TP_SHARED_MEM_VOL_B   2048  //! размер рашаренной памяти между процессами (используется для передачи данных)
+#define TP_SHARED_MEM_VOL_B   2048  //! размер раcшаренной памяти между процессами (используется для передачи данных)
 
 /**
  * @brief результат обработки процесса 
@@ -57,23 +57,23 @@ typedef struct {
 	* @param  num номер структуры
 	* @param  action указатель на функцию управления процессом периферии, <control_struct> - указатель на модель управления периферией
   * @param  process_time время работы данной функции с момента перезагрузки
-  * @param  work_percantage процентное время работы от общего времени работы
+  * @param  work_percentage процентное время работы от общего времени работы
   */
 typedef struct {
   uint8_t num;
   //
-  int8_t (*action) (void* coontrol_struct, uint64_t time_us, typeProcessInterfaceStruct* interface);
+  int8_t (*action) (void* control_struct, uint64_t time_us, typeProcessInterfaceStruct* interface);
   void* control_struct_ptr;
   typeProcessInterfaceStruct interface;
   typeTimeStruct process_time;
-  float work_percantage;
-} typeProcessTeamplateStruct;
+  float work_percentage;
+} typeProcessTemplateStruct;
 
 /**
   * @brief  структура управления планировщиком задач
   */
 typedef struct {
-  typeProcessTeamplateStruct process[TP_PROCESS_MAX_NUM];
+  typeProcessTemplateStruct process[TP_PROCESS_MAX_NUM];
   uint32_t event[TP_EVENT_MAX_NUM];
   uint8_t shared_mem[TP_SHARED_MEM_VOL_B];
   uint32_t shared_mem_ptr;
@@ -83,7 +83,7 @@ typedef struct {
   //
   typeTimeStruct time, work_time;
   uint64_t last_call_time_us;
-  float work_percantage;
+  float work_percentage;
   //
   uint8_t status;
   uint32_t error_counter;

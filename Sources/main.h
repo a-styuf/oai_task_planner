@@ -13,6 +13,7 @@
 #define _MAIN_H_
 
 #include "1986ve8_lib/cm4ikmcu.h"
+#include <stdio.h>
 #include "debug.h"
 
 #define DEBUG

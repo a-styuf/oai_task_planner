@@ -44,28 +44,28 @@ int main() {
 	System_Init();  // инициализация периферии микроконтроллера: платформозависимая
 	Timers_Init();	// инициализация таймеров и управления временем
 	//
-	printf("System init: <OK>. Version %s\n", CM_SW_VERSION);
+	printf("Sys init OK. v%s\n", CM_SW_VERSION);
 	//
 	cm_init(&cm, CM, CM_SELF_MB_ID, MKO_ADDRESS_DEFAULT, FRAME_DEV_ID, CM_SW_VERSION, CM+1);  // инициализация объекта программной модели ЦМ (включает в себя все периферийные модели ЦМ: ВШ, МКО, GPIO, ADC и т.п.)
 	//
-	printf("CM base system: <OK>\n");
+	printf("CM <OK>\n");
 	//
 	general_state = cm_load_cfg(&cm);	// загрузка конфигурации из энергонезависимой памяти
-	printf("CM cfg load: <%d>\n", general_state);
+	printf("Cfg load <%d>\n", general_state);
 	//
 	pwr_all_on_off(&cm.pwr, 1);  // включение периферии согласно настройкам каналов управления питанием
-	printf("All channels ON\n");
+	printf("All ch. ON\n");
 	__main_init_peripheral_modules();  //инициализация объектов периферии, подключаемых к ЦМ
-	printf("Peripheral init done\n");
+	printf("Per. init done\n");
 	tp_init(&tp);	// инициализация планировщика задач
 	// сброс времени
 	Time_Set(0, NULL, NULL);
 	// Системные процессы
 	__main_process_registration_box();  //регистрация процессов обработки ЦМ и периферии
-	printf("Process registration completed\n");
+	printf("Proc. reg. done\n");
 	//
 	general_state = WDT_Init();
-	printf("WDG Timer init: <%d>\n", general_state);
+	printf("WDG init: <%d>\n", general_state);
 	//
 	while(1) {
 		tp_handler(&tp); // обработка планировщика задач
@@ -107,8 +107,6 @@ void __main_base_init(void)
 	printf("CM Init: start\n");
 	// отключение периферии
 	pwr_all_on_off(&cm.pwr, 0);  //todo: возможно необходимо поместить данную функций после инициализации ЦМ
-	// отключение планировщика задач
-	tp_init(&tp);
 	// архивация памяти
 	fr_mem_format(&cm.mem);
 	// инициализация структур
@@ -116,19 +114,23 @@ void __main_base_init(void)
 	// включение периферии
 	pwr_all_on_off(&cm.pwr, 1);
 	__main_init_peripheral_modules();
+	// отключение планировщика задач
+	tp_init(&tp);
+	//
 	Timer_Delay(1, 1000);
 	// сброс времени
 	Time_Set(0, &cm.ctrl.diff_time, &cm.ctrl.diff_time_fractional);
 	// регистрация процессов
 	__main_process_registration_box();
-	//
-	printf("CM Init: finish\n");
+	// printf("CM Init: finish\n");
 }
 
 void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 {
 	typeFrameStruct frame;
+	int8_t var_int8 = 0;
 	uint16_t sa_arr[32];
+	uint16_t data_arr[32];
 	uint16_t var_uint16 = 0;
 	uint32_t var_uint32 = 0;
 	uint16_t ib_id, ib_fcode, ib_addr, ib_len;
@@ -136,7 +138,7 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 	if (mko_need_to_process(&cm_ptr->mko_rt)){
 		switch(cm_ptr->mko_rt.cw.field.sub_addr){
 			case CM_MKO_SA_CMD:
-				printf("MKO CMD: cmd <%d> data <0x%04X %04X %04X>\n", cm_ptr->mko_rt.data[0], cm_ptr->mko_rt.data[1], cm_ptr->mko_rt.data[2], cm_ptr->mko_rt.data[3]);
+				printf("MKO cmd <%d> d <0x%04X %04X %04X>\n", cm_ptr->mko_rt.data[0], cm_ptr->mko_rt.data[1], cm_ptr->mko_rt.data[2], cm_ptr->mko_rt.data[3]);
 				switch(cm_ptr->mko_rt.data[0]){
 					case (CMD_TEST):
 						//
@@ -151,7 +153,7 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 						cm_set_interval_value(cm_ptr, cm_ptr->mko_rt.data[1], cm_ptr->mko_rt.data[2]);
 						break;
 					case (CMD_CONST_MODE):
-						//
+						cm_constant_mode_ena(&cm, cm_ptr->mko_rt.data[1]);
 						break;
 					case (CMD_CURRENT_LVL):
 						if ((cm_ptr->mko_rt.data[1] < PWR_CH_NUMBER)){
@@ -163,7 +165,6 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 						if ((cm_ptr->mko_rt.data[1] < PWR_CH_NUMBER)){
 							pwr_set_bound(&cm.pwr, cm_ptr->mko_rt.data[1], (uint32_t)cm_ptr->mko_rt.data[2]);
 						}
-						else {}
 						break;
 					default:
 						break;
@@ -171,7 +172,8 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 				break;
 			case CM_MKO_SA_ARCH_REQUEST_CM:
 				if (cm_ptr->mko_rt.data[0] == 0){
-					fr_mem_read_data_frame(&cm_ptr->mem, (uint8_t*)&frame);
+					var_int8 = (fr_mem_read_data_frame(&cm_ptr->mem, (uint8_t*)&frame) == 0) ? 1 : 0;
+					cm_set_clear_status(&cm, CM_STATUS_DEF_AREA_ENA, var_int8);
 					mko_rt_write_to_subaddr(&cm_ptr->mko_rt, CM_MKO_SA_ARCH_READ_CM, (uint16_t*)&frame);
 				}
 				break;
@@ -189,7 +191,7 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 						sa_arr[2] = (var_uint32 >> 0) & 0xFFFF;
 						mko_rt_write_to_subaddr(&cm_ptr->mko_rt, CM_MKO_SA_TECH_CMD, (uint16_t*)sa_arr);
 						break;
-						case (TCMD_ANY_FRAME_READ):
+					case (TCMD_ANY_FRAME_READ):
 						sa_arr[0] |= 0x0100;
 						var_uint16 = fr_mem_read_any_frame(&cm_ptr->mem, sa_arr[1], (uint8_t *)&frame);
 						sa_arr[2] = (var_uint16 >> 0) & 0xFFFF;
@@ -219,6 +221,15 @@ void cm_mko_command_interface_handler(typeCMModel *cm_ptr)
 						}
 						mko_rt_write_to_subaddr(&cm_ptr->mko_rt, CM_MKO_SA_TECH_CMD, (uint16_t*)sa_arr);
 						break;
+					case (TCMD_SET_MKO_BC):
+						sa_arr[0] |= 0x0100;
+						//
+						memcpy((uint8_t*)data_arr, (uint8_t*)&sa_arr[4], 28*2);
+						mko_bc_transaction_start_by_cw(&cm_ptr->mko_bc, sa_arr[1], sa_arr[2], data_arr);
+						mko_rt_write_to_subaddr(&cm_ptr->mko_rt, CM_MKO_SA_TECH_RD, data_arr);
+						//
+						mko_rt_write_to_subaddr(&cm_ptr->mko_rt, CM_MKO_SA_TECH_CMD, (uint16_t*)sa_arr);
+						break;
 					default:
 						break;
 				}
@@ -246,7 +257,7 @@ void cm_dbg_ib_command_handler(typeCMModel* cm_ptr)
 						cm_ptr->ib.global_dbg_flag = __REV16(cm_ptr->ib.command_frame.data[0]) & 0x01;
 						break;
 					case CM_DBG_CMD_CM_RESET:
-						printf("Reset by WDG ");
+						printf("Rst by WDG ");
 						dbg_gpio(DBG_GPIO_ON);
 						Timer_Delay(1, 10000);
 						printf("Error\n");
@@ -312,6 +323,42 @@ void INT_MIL1_Callback(void)
 /**
   * @brief  обработчик прерывания от SysTick-таймера
   */
-void Systick_Handler(void){
+void Systick_Callback(void)
+{
 	tp_timer_handler(&tp);
+}
+
+void HardFault_Handler(void) 
+{
+	int* hardfault_args = (int *)0x10001F98;
+	unsigned int stacked_r0, stacked_r1, stacked_r2, stacked_r3, stacked_r12, stacked_lr, stacked_pc, stacked_psr;
+
+	printf ("\n\n[Hard fault handler - all numbers in hex]\n");
+
+	stacked_r0 = ((unsigned long) hardfault_args[0]);
+	stacked_r1 = ((unsigned long) hardfault_args[1]);
+	stacked_r2 = ((unsigned long) hardfault_args[2]);
+	stacked_r3 = ((unsigned long) hardfault_args[3]);
+
+	stacked_r12 = ((unsigned long) hardfault_args[4]);
+	stacked_lr = ((unsigned long) hardfault_args[5]);
+	stacked_pc = ((unsigned long) hardfault_args[6]);
+	stacked_psr = ((unsigned long) hardfault_args[7]);
+
+	printf ("R0 = %x\n", stacked_r0);
+	printf ("R1 = %x\n", stacked_r1);
+	printf ("R2 = %x\n", stacked_r2);
+	printf ("R3 = %x\n", stacked_r3);
+	printf ("R12 = %x\n", stacked_r12);
+	printf ("LR [R14] = %x  subroutine call return address\n", stacked_lr);
+	printf ("PC [R15] = %x  program counter\n", stacked_pc);
+	printf ("PSR = %x\n", stacked_psr);
+	printf ("BFAR = %x\n", (*((volatile unsigned long *)(0xE000ED38))));
+	printf ("CFSR = %x\n", (*((volatile unsigned long *)(0xE000ED28))));
+	printf ("HFSR = %x\n", (*((volatile unsigned long *)(0xE000ED2C))));
+	printf ("DFSR = %x\n", (*((volatile unsigned long *)(0xE000ED30))));
+	printf ("AFSR = %x\n", (*((volatile unsigned long *)(0xE000ED3C))));
+	printf ("SCB_SHCSR = %x\n", SCB->SHCSR);
+
+	while(1) continue;
 }

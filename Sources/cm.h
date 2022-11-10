@@ -79,6 +79,7 @@ enum mko_cmd_list
 {
 	CMD_TEST, CMD_SYNCH_TIME, CMD_INIT, CMD_SET_INTERVAL, 
 	CMD_CONST_MODE, CMD_CURRENT_LVL, CMD_PWR_CH_CTRL,
+	TCMD_SET_MKO_BC,
 	CMD_NUMBER
 };
 
@@ -137,7 +138,7 @@ typedef  struct
 }typeCMFrameReport;      //52
 
 /**
-  * @brief объединение для связки уровней кадров и полезных данных
+ * @brief объединение для связки уровней кадров и полезных данных
  */
 typedef union{
 	typeFrameStruct row;
@@ -213,7 +214,7 @@ typedef struct
 	//
 	uint16_t id;			          	//! id на внутренней шине
 	uint16_t self_num;          		//! номер устройства с точки зрения ЦМ
-	uint16_t half_set_num;          	//! номер полукомплекта (актуально длс приборов в с холодным резервированием)
+	uint16_t half_set_num;          	//! номер полукомплекта (актуально для приборов в с холодным резервированием)
 	uint16_t device_number, frame_type; //! параметры прибора, в котором он используется
 	//
 	uint16_t sw_version;
@@ -226,6 +227,7 @@ typedef struct
 	uint8_t frames_fifo_num, frames_fifo_num_max;
 	uint32_t fifo_error_cnt;
 	uint32_t global_frame_num;  //сквозной номер для формируемых кадров
+	uint8_t const_mode;
 	//
 	typePower pwr;
 	typeADCStruct adc;
@@ -240,6 +242,8 @@ typedef struct
 	uint64_t last_call_time_us, call_interval_us;
 	//
 }typeCMModel;
+
+#pragma pack(pop)
 
 //
 void cm_init(typeCMModel* cm_ptr, uint8_t self_num, uint8_t id, uint8_t mko_addr_default, uint16_t device_number, char* ver_str, uint16_t frame_type);
@@ -264,6 +268,7 @@ __weak void cm_dbg_ib_command_handler(typeCMModel* cm_ptr);
 // обработка командных сообщений МКО
 __weak void cm_mko_command_interface_handler(typeCMModel *cm_ptr);
 void cm_mko_cmd_synch_time(typeCMModel* cm_ptr);
+void cm_constant_mode_ena(typeCMModel* cm_ptr, uint8_t mode);
 uint8_t cm_set_clear_status(typeCMModel* cm_ptr, uint8_t status, uint8_t set_clear);
 // Внутренние рабочие функции
 void _buff_rev16(uint16_t *buff, uint8_t leng_16);

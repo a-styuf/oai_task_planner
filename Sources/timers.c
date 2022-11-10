@@ -39,7 +39,7 @@ void Timers_Init(void)
 {
     //
     CLK_CNTR->KEY = _KEY_;
-    CLK_CNTR->PER0_CLK |= (1<<24)|(1<<25)|(1<<26);  //включение Timer1, Timer2 bи Timer3
+    CLK_CNTR->PER0_CLK |= (1<<24)|(1<<25)|(1<<26);  //включение Timer1, Timer2 и Timer3
     CLK_CNTR->TIM1_CLK = (1<<16)| 39;  //timer clock freq = 1 MHz
     CLK_CNTR->TIM2_CLK = (1<<16)| 249; //timer clock freq = 160kHz
     CLK_CNTR->TIM3_CLK = (1<<16)| 3;   //timer clock freq = 10 MHz
@@ -79,8 +79,8 @@ void Timers_Init(void)
 }
 
 /**
-* @brief обработчик прерывания от таймеров
- *  - взводятит статус о том, что таймеры досчитал
+ * @brief обработчик прерывания от таймеров
+ *  - взводит статус о том, что таймеры досчитал
  * 
  */
 void INT_TMR1_Handler(void) 
